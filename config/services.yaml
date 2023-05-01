@@ -1,0 +1,3 @@
+services:
+    monolog.formatter.ecs:
+        class: 'Elastic\Monolog\Formatter\ElasticCommonSchemaFormatter'
