@@ -13,7 +13,7 @@ class TracingProcessorTest extends TestCase
 {
     use ProphecyTrait;
 
-    public function testWithTracingTransformer()
+    public function testWithTracingProcessor()
     {
         $processor = new TracingProcessor('tracing');
 
@@ -33,7 +33,7 @@ class TracingProcessorTest extends TestCase
         $this->assertInstanceOf(Tracing::class, $record['context']['tracing']);
     }
 
-    public function testWithTracingRenameTransformer()
+    public function testWithTracingRenameProcessor()
     {
         $processor = new TracingProcessor('trace_custom');
 
@@ -54,7 +54,7 @@ class TracingProcessorTest extends TestCase
         $this->assertInstanceOf(Tracing::class, $record['context']['tracing']);
     }
 
-    public function testWithoutTracingTransformer()
+    public function testWithoutTracingProcessor()
     {
         $processor = new TracingProcessor('tracing');
 
@@ -68,7 +68,7 @@ class TracingProcessorTest extends TestCase
         $this->assertArrayNotHasKey('tracing', $record['context']);
     }
 
-    public function testWithTracingWithoutTraceIdTransformer()
+    public function testWithTracingWithoutTraceIdProcessor()
     {
         $processor = new TracingProcessor('tracing');
 

@@ -14,7 +14,7 @@ class UserProcessorTest extends TestCase
 {
     use ProphecyTrait;
 
-    public function testWithUserTransformer()
+    public function testWithUserProcessor()
     {
         $user = $this->prophesize(User::class);
 
@@ -35,7 +35,7 @@ class UserProcessorTest extends TestCase
         $this->assertInstanceOf(User::class, $record['context']['user']);
     }
 
-    public function testWithoutUserTransformer()
+    public function testWithoutUserProcessor()
     {
         $provider = $this->prophesize(EcsUserProviderInterface::class);
         $provider->getDomain()->willReturn('in_memory');
@@ -53,7 +53,7 @@ class UserProcessorTest extends TestCase
         $this->assertArrayNotHasKey('user', $record['context']);
     }
 
-    public function testUserDefinedTransformer()
+    public function testUserDefinedProcessor()
     {
         $user = $this->prophesize(User::class);
 

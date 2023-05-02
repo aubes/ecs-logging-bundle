@@ -2,12 +2,12 @@
 
 ![CI](https://github.com/aubes/ecs-logging-bundle/actions/workflows/php.yml/badge.svg)
 
-This Symfony bundle provides the [Ecs](https://www.elastic.co/guide/en/ecs/current/ecs-reference.html) log format.
+This Symfony bundle provides the [Ecs](https://www.elastic.co/guide/en/ecs/current/ecs-reference.html) log format for Monolog.
 
 It uses [elastic/ecs-logging](https://github.com/elastic/ecs-logging).
 
 It is compatible with :
- * PHP 7.4, 8.x
+ * PHP 7.4 and 8.x
  * Symfony 5.4 and 6.x
  * Monolog 2.x
 
@@ -47,62 +47,48 @@ ecs_logging:
         #channels: []
 
     processor:
+        # https://www.elastic.co/guide/en/ecs/current/ecs-service.html
         service:
             enabled: false
-            name: ~
-            version: ~
-            ephemeral_id: ~
-            id: ~
-            node_name: ~
-            state: ~
-            type: ~
+            name: ~         # Name of the service data is collected from.
+            version: ~      # Version of the service the data was collected from.
+            ephemeral_id: ~ # Ephemeral identifier of this service (if one exists).
+            id: ~           # Unique identifier of the running service.
+            node_name: ~    # Name of a service node.
+            state: ~        # Current state of the service.
+            type: ~         # The type of the service data is collected from.
 
-            # Logging channels the processor should be pushed to
-            #handlers: []
-
-            # Logging handlers the processor should be pushed to
-            #channels: []
+            #handlers: [] # Logging channels the processor should be pushed to
+            #channels: [] # Logging handlers the processor should be pushed to
 
         error:
             enabled: false
             field_name: 'error'
 
-            # Logging channels the processor should be pushed to
-            #handlers: []
-
-            # Logging handlers the processor should be pushed to
-            #channels: []
+            #handlers: [] # Logging channels the processor should be pushed to
+            #channels: [] # Logging handlers the processor should be pushed to
 
         tracing:
             enabled: false
             field_name: 'tracing'
 
-            # Logging channels the processor should be pushed to
-            #handlers: []
-
-            # Logging handlers the processor should be pushed to
-            #channels: []
+            #handlers: [] # Logging channels the processor should be pushed to
+            #channels: [] # Logging handlers the processor should be pushed to
 
         user:
             enabled: false
             domain: ~ # Ecs user domain, example: ldap
             provider: ~ # Service Id of the Ecs user provider, default: Aubes\EcsLoggingBundle\Security\EcsUserProvider
 
-            # Logging channels the processor should be pushed to
-            #handlers: []
-
-            # Logging handlers the processor should be pushed to
-            #channels: []
+            #handlers: [] # Logging channels the processor should be pushed to
+            #channels: [] # Logging handlers the processor should be pushed to
 
         auto_label:
             enabled: false
             fields: [] # Name of internal fields, these fields will not be moved
 
-            # Logging channels the processor should be pushed to
-            #handlers: []
-
-            # Logging handlers the processor should be pushed to
-            #channels: []
+            #handlers: [] # Logging channels the processor should be pushed to
+            #channels: [] # Logging handlers the processor should be pushed to
 ```
 
 ### Configuration example
@@ -117,11 +103,11 @@ ecs_logging:
         service:
             enabled: true
             name: 'MyApp'
-            version: 'v1.0.0'
+            version: '%env(string:ECS_LOGGING_SERVICE_VERSION)%'
             # [...]
 
         user:
-            enabled: false
+            enabled: true
             domain: ~ # Ecs user domain, example: ldap
 ```
 
@@ -129,6 +115,8 @@ ecs_logging:
 # config/packages/monolog.yaml
 monolog:
     handlers:
+        # [...]
+
         ecs:
             type: stream
             path: "%kernel.logs_dir%/%kernel.environment%.ecs.log"
@@ -300,9 +288,9 @@ For example without the processor, a Symfony log contains these fields :
     "route_parameters": {
         "_route": "_wdt",
         "_controller": "web_profiler.controller.profiler::toolbarAction",
-        "token": "afcfbe"
+        "token": "..."
     },
-    "request_uri": "http://localhost:8080/_wdt/afcfbe",
+    "request_uri": "...",
     "method": "GET"
 }
 ```
@@ -316,9 +304,9 @@ With the processor, the Symfony log looks like :
         "route_parameters": {
             "_route": "_wdt",
             "_controller": "web_profiler.controller.profiler::toolbarAction",
-            "token": "afcfbe"
+            "token": "..."
         },
-        "request_uri": "http://localhost:8080/_wdt/afcfbe",
+        "request_uri": "...",
         "method": "GET"
     }
 }
@@ -337,7 +325,7 @@ ecs_logging:
 
     processor:
         auto_label:
-            enabled: false
+            enabled: true
             fields: [] # Name of internal fields, these fields will not be moved
             #fields: !php/const Aubes\EcsLoggingBundle\Logger\AutoLabelProcessor::FIELDS_MINIMAL
             #fields: !php/const Aubes\EcsLoggingBundle\Logger\AutoLabelProcessor::FIELDS_BUNDLE
@@ -346,9 +334,9 @@ ecs_logging:
 
 You can define a custom list or use the built-in constant:
 
- * Aubes\EcsLoggingBundle\Logger\AutoLabelProcessor::FIELDS_MINIMAL: minimal fields supported by the bundle
- * Aubes\EcsLoggingBundle\Logger\AutoLabelProcessor::FIELDS_BUNDLE: all fields supported by the bundle
- * Aubes\EcsLoggingBundle\Logger\AutoLabelProcessor::FIELDS_ALL: all [Ecs fields](https://www.elastic.co/guide/en/ecs/current/ecs-field-reference.html) and all bundle fields
+ * `Aubes\EcsLoggingBundle\Logger\AutoLabelProcessor::FIELDS_MINIMAL`: minimal fields supported by the bundle
+ * `Aubes\EcsLoggingBundle\Logger\AutoLabelProcessor::FIELDS_BUNDLE`: all fields supported by the bundle
+ * `Aubes\EcsLoggingBundle\Logger\AutoLabelProcessor::FIELDS_ALL`: all [Ecs fields](https://www.elastic.co/guide/en/ecs/current/ecs-field-reference.html) and all bundle fields
 
 For performance reasons, use only necessary fields.
 
@@ -377,7 +365,7 @@ monolog:
             type: stream
             path: "%kernel.logs_dir%/%kernel.environment%.log"
             level: warning
-            channels: [ "!event" ]
+            channels: [ "!event", "!app" ]
             formatter: 'monolog.formatter.ecs'
         app:
             type: stream

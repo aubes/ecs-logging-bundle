@@ -19,7 +19,7 @@ class UserProcessor
 
     public function support(array $record): bool
     {
-        return ($record['context']['user'] ?? null) === null;
+        return !isset($record['context']['user']);
     }
 
     public function __invoke(array $record): array

@@ -13,7 +13,7 @@ class ErrorProcessorTest extends TestCase
 {
     use ProphecyTrait;
 
-    public function testWithErrorTransformer()
+    public function testWithErrorProcessor()
     {
         $processor = new ErrorProcessor('error');
 
@@ -30,7 +30,7 @@ class ErrorProcessorTest extends TestCase
         $this->assertInstanceOf(Error::class, $record['context']['error']);
     }
 
-    public function testWithErrorRenameTransformer()
+    public function testWithErrorRenameProcessor()
     {
         $processor = new ErrorProcessor('error_custom');
 
@@ -48,7 +48,7 @@ class ErrorProcessorTest extends TestCase
         $this->assertInstanceOf(Error::class, $record['context']['error']);
     }
 
-    public function testWithoutErrorTransformer()
+    public function testWithoutErrorProcessor()
     {
         $processor = new ErrorProcessor('error');
 
@@ -62,7 +62,7 @@ class ErrorProcessorTest extends TestCase
         $this->assertArrayNotHasKey('error', $record['context']);
     }
 
-    public function testWithNonThrowableErrorTransformer()
+    public function testWithNonThrowableErrorProcessor()
     {
         $processor = new ErrorProcessor('error');
 
