@@ -11,11 +11,9 @@ use Symfony\Component\Config\Definition\ConfigurationInterface;
 class Configuration implements ConfigurationInterface
 {
     /**
-     * {@inheritdoc}
-     *
      * @psalm-suppress UndefinedMethod
      */
-    public function getConfigTreeBuilder()
+    public function getConfigTreeBuilder(): TreeBuilder
     {
         $treeBuilder = new TreeBuilder('ecs_logging');
         $rootNode = $treeBuilder->getRootNode();

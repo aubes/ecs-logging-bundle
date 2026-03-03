@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Aubes\EcsLoggingBundle\Logger;
 
 use Elastic\Types\Error;
+use Monolog\LogRecord;
 
 class ErrorProcessor extends AbstractProcessor
 {
@@ -13,12 +14,12 @@ class ErrorProcessor extends AbstractProcessor
         return 'error';
     }
 
-    public function support(array $record): bool
+    public function support(LogRecord $record): bool
     {
-        return isset($record['context'][$this->fieldName]) && !$record['context'][$this->fieldName] instanceof Error;
+        return isset($record->context[$this->fieldName]) && !$record->context[$this->fieldName] instanceof Error;
     }
 
-    public function transformValue($value)
+    public function transformValue(mixed $value): Error
     {
         if (!$value instanceof \Throwable) {
             throw new \InvalidArgumentException($this->fieldName . ' must be an instance of Throwable');

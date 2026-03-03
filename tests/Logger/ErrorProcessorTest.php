@@ -6,6 +6,8 @@ namespace Aubes\EcsLoggingBundle\Tests\Logger;
 
 use Aubes\EcsLoggingBundle\Logger\ErrorProcessor;
 use Elastic\Types\Error;
+use Monolog\Level;
+use Monolog\LogRecord;
 use PHPUnit\Framework\TestCase;
 use Prophecy\PhpUnit\ProphecyTrait;
 
@@ -17,60 +19,74 @@ class ErrorProcessorTest extends TestCase
     {
         $processor = new ErrorProcessor('error');
 
-        $record = [
-            'context' => [
+        $record = new LogRecord(
+            new \DateTimeImmutable(),
+            'channel',
+            Level::Info,
+            'message',
+            [
                 'error' => new \Exception('message'),
-            ],
-        ];
+            ]
+        );
 
         $record = $processor($record);
 
-        $this->assertArrayHasKey('context', $record);
-        $this->assertArrayHasKey('error', $record['context']);
-        $this->assertInstanceOf(Error::class, $record['context']['error']);
+        $this->assertArrayHasKey('error', $record->context);
+        $this->assertInstanceOf(Error::class, $record->context['error']);
     }
 
     public function testWithErrorRenameProcessor()
     {
         $processor = new ErrorProcessor('error_custom');
 
-        $record = [
-            'context' => [
+        $record = new LogRecord(
+            new \DateTimeImmutable(),
+            'channel',
+            Level::Info,
+            'message',
+            [
                 'error_custom' => new \Exception('message'),
-            ],
-        ];
+            ]
+        );
 
         $record = $processor($record);
 
-        $this->assertArrayHasKey('context', $record);
-        $this->assertArrayHasKey('error', $record['context']);
-        $this->assertArrayNotHasKey('error_custom', $record['context']);
-        $this->assertInstanceOf(Error::class, $record['context']['error']);
+        $this->assertArrayHasKey('error', $record->context);
+        $this->assertArrayNotHasKey('error_custom', $record->context);
+        $this->assertInstanceOf(Error::class, $record->context['error']);
     }
 
     public function testWithoutErrorProcessor()
     {
         $processor = new ErrorProcessor('error');
 
-        $record = [
-            'context' => [],
-        ];
+        $record = new LogRecord(
+            new \DateTimeImmutable(),
+            'channel',
+            Level::Info,
+            'message',
+            []
+        );
 
         $record = $processor($record);
 
         $this->assertArrayHasKey('context', $record);
-        $this->assertArrayNotHasKey('error', $record['context']);
+        $this->assertArrayNotHasKey('error', $record->context);
     }
 
     public function testWithNonThrowableErrorProcessor()
     {
         $processor = new ErrorProcessor('error');
 
-        $record = [
-            'context' => [
+        $record = new LogRecord(
+            new \DateTimeImmutable(),
+            'channel',
+            Level::Info,
+            'message',
+            [
                 'error' => 'Not Throwable',
-            ],
-        ];
+            ]
+        );
 
         $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('error must be an instance of Throwable');
@@ -78,6 +94,6 @@ class ErrorProcessorTest extends TestCase
         $record = $processor($record);
 
         $this->assertArrayHasKey('context', $record);
-        $this->assertArrayNotHasKey('error', $record['context']);
+        $this->assertArrayNotHasKey('error', $record->context);
     }
 }

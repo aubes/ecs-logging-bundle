@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Aubes\EcsLoggingBundle\Logger;
 
 use Elastic\Types\Service;
+use Monolog\LogRecord;
 
 class ServiceProcessor
 {
@@ -15,12 +16,13 @@ class ServiceProcessor
         $this->service = $service;
     }
 
-    public function __invoke(array $record): array
+    public function __invoke(LogRecord $record): LogRecord
     {
-        if (!isset($record['context']['service'])) {
-            $record['context']['service'] = $this->service;
+        $context = $record->context;
+        if (!isset($context['service'])) {
+            $context['service'] = $this->service;
         }
 
-        return $record;
+        return $record->with(context: $context);
     }
 }
