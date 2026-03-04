@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Aubes\EcsLoggingBundle\Logger;
 
+use Monolog\LogRecord;
+
 abstract class AbstractProcessor
 {
     protected string $fieldName;
@@ -13,29 +15,25 @@ abstract class AbstractProcessor
         $this->fieldName = $fieldName;
     }
 
-    /**
-     * @param mixed $value
-     *
-     * @return mixed
-     */
-    abstract public function transformValue($value);
+    abstract public function transformValue(mixed $value): mixed;
 
-    abstract public function support(array $record): bool;
+    abstract public function support(LogRecord $record): bool;
 
     abstract public function getTargetField(): string;
 
-    public function __invoke(array $record): array
+    public function __invoke(LogRecord $record): LogRecord
     {
         if (!$this->support($record)) {
             return $record;
         }
 
-        $record['context'][$this->getTargetField()] = $this->transformValue($record['context'][$this->fieldName]);
+        $context = $record->context;
+        $context[$this->getTargetField()] = $this->transformValue($record->context[$this->fieldName]);
 
         if ($this->fieldName !== $this->getTargetField()) {
-            unset($record['context'][$this->fieldName]);
+            unset($context[$this->fieldName]);
         }
 
-        return $record;
+        return $record->with(context: $context);
     }
 }

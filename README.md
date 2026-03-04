@@ -7,9 +7,9 @@ This Symfony bundle provides the [Ecs](https://www.elastic.co/guide/en/ecs/curre
 It uses [elastic/ecs-logging](https://github.com/elastic/ecs-logging).
 
 It is compatible with :
- * PHP 7.4 and 8.x
- * Symfony 5.4 and 6.x
- * Monolog 2.x
+ * PHP >=8.1
+ * Symfony 6.4 | 7.x
+ * Monolog 3.x
 
 ## Installation
 

@@ -5,24 +5,25 @@ declare(strict_types=1);
 namespace Aubes\EcsLoggingBundle\Logger;
 
 use Aubes\EcsLoggingBundle\Security\EcsUserProviderInterface;
+use Monolog\LogRecord;
 
 class UserProcessor
 {
     protected EcsUserProviderInterface $provider;
     protected ?string $domain;
 
-    public function __construct(EcsUserProviderInterface $provider, string $domain = null)
+    public function __construct(EcsUserProviderInterface $provider, ?string $domain = null)
     {
         $this->provider = $provider;
         $this->domain = $domain;
     }
 
-    public function support(array $record): bool
+    public function support(LogRecord $record): bool
     {
-        return !isset($record['context']['user']);
+        return !isset($record->context['user']);
     }
 
-    public function __invoke(array $record): array
+    public function __invoke(LogRecord $record): LogRecord
     {
         if (!$this->support($record)) {
             return $record;
@@ -39,8 +40,9 @@ class UserProcessor
             $ecsUser->setDomain($domain);
         }
 
-        $record['context']['user'] = $ecsUser;
+        $context = $record->context;
+        $context['user'] = $ecsUser;
 
-        return $record;
+        return $record->with(context: $context);
     }
 }

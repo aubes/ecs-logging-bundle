@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Aubes\EcsLoggingBundle\Logger;
 
 use Elastic\Types\Tracing;
+use Monolog\LogRecord;
 
 class TracingProcessor extends AbstractProcessor
 {
@@ -13,12 +14,12 @@ class TracingProcessor extends AbstractProcessor
         return 'tracing';
     }
 
-    public function support(array $record): bool
+    public function support(LogRecord $record): bool
     {
-        return isset($record['context'][$this->fieldName]) && !$record['context'][$this->fieldName] instanceof Tracing;
+        return isset($record->context[$this->fieldName]) && !$record->context[$this->fieldName] instanceof Tracing;
     }
 
-    public function transformValue($value)
+    public function transformValue(mixed $value): Tracing
     {
         if (!isset($value['trace_id'])) {
             throw new \InvalidArgumentException('trace_id is required when ' . $this->fieldName . ' is provided');

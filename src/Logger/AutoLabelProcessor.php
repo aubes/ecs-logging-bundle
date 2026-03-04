@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Aubes\EcsLoggingBundle\Logger;
 
+use Monolog\LogRecord;
+
 class AutoLabelProcessor
 {
     public const FIELD_TIMESTAMP = '@timestamp';
@@ -151,15 +153,16 @@ class AutoLabelProcessor
         $this->ecsFields = $fields;
     }
 
-    public function __invoke(array $record): array
+    public function __invoke(LogRecord $record): LogRecord
     {
-        foreach ($record['context'] as $contextName => $contextValue) {
+        $context = $record->context;
+        foreach ($context as $contextName => $contextValue) {
             if (!\in_array($contextName, $this->ecsFields)) {
-                $record['context']['labels'][$contextName] = $contextValue;
-                unset($record['context'][$contextName]);
+                $context['labels'][$contextName] = $contextValue;
+                unset($context[$contextName]);
             }
         }
 
-        return $record;
+        return $record->with(context: $context);
     }
 }
