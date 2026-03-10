@@ -7,7 +7,7 @@ namespace Aubes\EcsLoggingBundle\Security;
 use Elastic\Types\User;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 
-class EcsUserProvider implements EcsUserProviderInterface
+final class EcsUserProvider implements EcsUserProviderInterface
 {
     protected TokenStorageInterface $tokenStorage;
 
@@ -28,6 +28,7 @@ class EcsUserProvider implements EcsUserProviderInterface
 
         if ($user !== null) {
             $ecsUser = new User();
+            /** @psalm-suppress InternalMethod */
             $ecsUser->setId($user->getUserIdentifier());
 
             return $ecsUser;

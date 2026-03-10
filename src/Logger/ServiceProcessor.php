@@ -7,7 +7,7 @@ namespace Aubes\EcsLoggingBundle\Logger;
 use Elastic\Types\Service;
 use Monolog\LogRecord;
 
-class ServiceProcessor
+final class ServiceProcessor
 {
     protected Service $service;
 

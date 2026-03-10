@@ -7,7 +7,7 @@ namespace Aubes\EcsLoggingBundle\Logger;
 use Elastic\Types\Error;
 use Monolog\LogRecord;
 
-class ErrorProcessor extends AbstractProcessor
+final class ErrorProcessor extends AbstractProcessor
 {
     public function getTargetField(): string
     {

@@ -6,7 +6,7 @@ namespace Aubes\EcsLoggingBundle\Logger;
 
 use Monolog\LogRecord;
 
-class AutoLabelProcessor
+final class AutoLabelProcessor
 {
     public const FIELD_TIMESTAMP = '@timestamp';
     public const FIELD_LABELS = 'labels';

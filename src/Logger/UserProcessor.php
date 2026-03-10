@@ -7,7 +7,7 @@ namespace Aubes\EcsLoggingBundle\Logger;
 use Aubes\EcsLoggingBundle\Security\EcsUserProviderInterface;
 use Monolog\LogRecord;
 
-class UserProcessor
+final class UserProcessor
 {
     protected EcsUserProviderInterface $provider;
     protected ?string $domain;
