@@ -16,6 +16,9 @@ final class EcsUserProvider implements EcsUserProviderInterface
         $this->tokenStorage = $tokenStorage;
     }
 
+    /**
+     * @psalm-suppress InternalMethod
+     */
     public function getUser(): ?User
     {
         $token = $this->tokenStorage->getToken();
@@ -28,7 +31,6 @@ final class EcsUserProvider implements EcsUserProviderInterface
 
         if ($user !== null) {
             $ecsUser = new User();
-            /* @psalm-suppress InternalMethod */
             $ecsUser->setId($user->getUserIdentifier());
 
             return $ecsUser;
