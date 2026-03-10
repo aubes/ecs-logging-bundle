@@ -39,6 +39,7 @@ final class Configuration implements ConfigurationInterface
                             ->canBeEnabled()
                             ->children()
                                 ->scalarNode('name')->end()
+                                ->scalarNode('address')->end()
                                 ->scalarNode('version')->end()
                                 ->scalarNode('ephemeral_id')->end()
                                 ->scalarNode('id')->end()

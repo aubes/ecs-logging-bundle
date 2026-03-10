@@ -9,7 +9,7 @@ use Monolog\LogRecord;
 
 final class ServiceProcessor
 {
-    protected Service $service;
+    private Service $service;
 
     public function __construct(Service $service)
     {
@@ -18,10 +18,12 @@ final class ServiceProcessor
 
     public function __invoke(LogRecord $record): LogRecord
     {
-        $context = $record->context;
-        if (!isset($context['service'])) {
-            $context['service'] = $this->service;
+        if (isset($record->context['service'])) {
+            return $record;
         }
+
+        $context = $record->context;
+        $context['service'] = $this->service;
 
         return $record->with(context: $context);
     }

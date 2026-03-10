@@ -146,18 +146,18 @@ final class AutoLabelProcessor
         self::FIELD_X509,
     ];
 
-    protected array $ecsFields;
+    private array $ecsFields;
 
     public function __construct(array $fields)
     {
-        $this->ecsFields = $fields;
+        $this->ecsFields = \array_flip($fields);
     }
 
     public function __invoke(LogRecord $record): LogRecord
     {
         $context = $record->context;
         foreach ($context as $contextName => $contextValue) {
-            if (!\in_array($contextName, $this->ecsFields)) {
+            if (!isset($this->ecsFields[$contextName])) {
                 $context['labels'][$contextName] = $contextValue;
                 unset($context[$contextName]);
             }

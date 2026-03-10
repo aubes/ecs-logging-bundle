@@ -9,7 +9,7 @@ use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInt
 
 final class EcsUserProvider implements EcsUserProviderInterface
 {
-    protected TokenStorageInterface $tokenStorage;
+    private TokenStorageInterface $tokenStorage;
 
     public function __construct(TokenStorageInterface $tokenStorage)
     {
@@ -28,7 +28,7 @@ final class EcsUserProvider implements EcsUserProviderInterface
 
         if ($user !== null) {
             $ecsUser = new User();
-            /** @psalm-suppress InternalMethod */
+            /* @psalm-suppress InternalMethod */
             $ecsUser->setId($user->getUserIdentifier());
 
             return $ecsUser;

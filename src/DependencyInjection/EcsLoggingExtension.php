@@ -74,7 +74,7 @@ final class EcsLoggingExtension extends Extension
 
         $this->configureMonologProcessor($config, $processorConfig, $processor);
 
-        $container->setDefinition('ecs_logging.processor.error', $processor);
+        $container->setDefinition('.ecs_logging.processor.error', $processor);
     }
 
     protected function configureServiceProcessor(array $config, ContainerBuilder $container): void
