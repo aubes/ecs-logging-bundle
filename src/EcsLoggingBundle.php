@@ -6,6 +6,9 @@ namespace Aubes\EcsLoggingBundle;
 
 use Symfony\Component\HttpKernel\Bundle\Bundle;
 
-class EcsLoggingBundle extends Bundle
+/**
+ * @unused
+ */
+final class EcsLoggingBundle extends Bundle
 {
 }

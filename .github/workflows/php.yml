@@ -18,6 +18,8 @@ jobs:
       matrix:
         include:
           -   php-version: '8.1'
+          -   php-version: '8.2'
+          -   php-version: '8.4'
       fail-fast: false
 
     steps:

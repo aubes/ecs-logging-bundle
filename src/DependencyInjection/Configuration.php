@@ -8,10 +8,11 @@ use Symfony\Component\Config\Definition\Builder\NodeDefinition;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 use Symfony\Component\Config\Definition\ConfigurationInterface;
 
-class Configuration implements ConfigurationInterface
+final class Configuration implements ConfigurationInterface
 {
     /**
      * @psalm-suppress UndefinedMethod
+     * @psalm-suppress PossiblyNullReference
      */
     public function getConfigTreeBuilder(): TreeBuilder
     {
@@ -38,6 +39,7 @@ class Configuration implements ConfigurationInterface
                             ->canBeEnabled()
                             ->children()
                                 ->scalarNode('name')->end()
+                                ->scalarNode('address')->end()
                                 ->scalarNode('version')->end()
                                 ->scalarNode('ephemeral_id')->end()
                                 ->scalarNode('id')->end()

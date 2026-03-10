@@ -28,9 +28,10 @@ abstract class AbstractProcessor
         }
 
         $context = $record->context;
-        $context[$this->getTargetField()] = $this->transformValue($record->context[$this->fieldName]);
+        $targetField = $this->getTargetField();
+        $context[$targetField] = $this->transformValue($record->context[$this->fieldName]);
 
-        if ($this->fieldName !== $this->getTargetField()) {
+        if ($this->fieldName !== $targetField) {
             unset($context[$this->fieldName]);
         }
 

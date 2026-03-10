@@ -23,8 +23,10 @@ use Symfony\Component\HttpKernel\DependencyInjection\Extension;
  * @SuppressWarnings(PMD.NPathComplexity)
  * @SuppressWarnings(PMD.CyclomaticComplexity)
  * @SuppressWarnings(PMD.ElseExpression)
+ *
+ * @psalm-suppress InternalClass
  */
-class EcsLoggingExtension extends Extension
+final class EcsLoggingExtension extends Extension
 {
     public function load(array $configs, ContainerBuilder $container): void
     {
@@ -72,7 +74,7 @@ class EcsLoggingExtension extends Extension
 
         $this->configureMonologProcessor($config, $processorConfig, $processor);
 
-        $container->setDefinition('ecs_logging.processor.error', $processor);
+        $container->setDefinition('.ecs_logging.processor.error', $processor);
     }
 
     protected function configureServiceProcessor(array $config, ContainerBuilder $container): void
@@ -150,7 +152,7 @@ class EcsLoggingExtension extends Extension
 
         $processorConfig = $config['processor']['user'];
 
-        if ($processorConfig['provider'] ?? null === null) {
+        if (($processorConfig['provider'] ?? null) === null) {
             $provider = new Definition(EcsUserProvider::class);
             $provider->setAutowired(true);
         } else {

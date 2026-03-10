@@ -7,7 +7,7 @@ namespace Aubes\EcsLoggingBundle\Logger;
 use Elastic\Types\Tracing;
 use Monolog\LogRecord;
 
-class TracingProcessor extends AbstractProcessor
+final class TracingProcessor extends AbstractProcessor
 {
     public function getTargetField(): string
     {
