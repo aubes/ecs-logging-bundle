@@ -9,13 +9,10 @@ use Monolog\LogRecord;
 
 final class UserProcessor
 {
-    private EcsUserProviderInterface $provider;
-    private ?string $domain;
-
-    public function __construct(EcsUserProviderInterface $provider, ?string $domain = null)
-    {
-        $this->provider = $provider;
-        $this->domain = $domain;
+    public function __construct(
+        private readonly EcsUserProviderInterface $provider,
+        private readonly ?string $domain = null,
+    ) {
     }
 
     public function support(LogRecord $record): bool

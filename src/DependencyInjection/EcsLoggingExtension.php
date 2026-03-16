@@ -45,7 +45,7 @@ final class EcsLoggingExtension extends Extension
         }
     }
 
-    protected function configureAutoLabelProcessor(array $config, ContainerBuilder $container): void
+    private function configureAutoLabelProcessor(array $config, ContainerBuilder $container): void
     {
         if (!isset($config['processor']['auto_label']) || !$config['processor']['auto_label']['enabled']) {
             return;
@@ -61,7 +61,7 @@ final class EcsLoggingExtension extends Extension
         $container->setDefinition('.ecs_logging.processor.auto_label', $processor);
     }
 
-    protected function configureErrorProcessor(array $config, ContainerBuilder $container): void
+    private function configureErrorProcessor(array $config, ContainerBuilder $container): void
     {
         if (!isset($config['processor']['error']) || !$config['processor']['error']['enabled']) {
             return;
@@ -77,7 +77,7 @@ final class EcsLoggingExtension extends Extension
         $container->setDefinition('.ecs_logging.processor.error', $processor);
     }
 
-    protected function configureServiceProcessor(array $config, ContainerBuilder $container): void
+    private function configureServiceProcessor(array $config, ContainerBuilder $container): void
     {
         if (!isset($config['processor']['service']) || !$config['processor']['service']['enabled']) {
             return;
@@ -128,7 +128,7 @@ final class EcsLoggingExtension extends Extension
         $container->setDefinition('.ecs_logging.processor.service', $processor);
     }
 
-    protected function configureTracingProcessor(array $config, ContainerBuilder $container): void
+    private function configureTracingProcessor(array $config, ContainerBuilder $container): void
     {
         if (!isset($config['processor']['tracing']) || !$config['processor']['tracing']['enabled']) {
             return;
@@ -144,7 +144,7 @@ final class EcsLoggingExtension extends Extension
         $container->setDefinition('.ecs_logging.processor.tracing', $processor);
     }
 
-    protected function configureUserProcessor(array $config, ContainerBuilder $container): void
+    private function configureUserProcessor(array $config, ContainerBuilder $container): void
     {
         if (!isset($config['processor']['user']) || !$config['processor']['user']['enabled']) {
             return;
@@ -168,7 +168,7 @@ final class EcsLoggingExtension extends Extension
         $container->setDefinition('.ecs_logging.processor.user', $processor);
     }
 
-    protected function configureMonologProcessor(array $config, array $configOverride, Definition $processor): void
+    private function configureMonologProcessor(array $config, array $configOverride, Definition $processor): void
     {
         $channels = !empty($configOverride['channels']) ? $configOverride['channels'] : $config['monolog']['channels'];
         foreach ($channels as $channel) {

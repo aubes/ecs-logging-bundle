@@ -90,8 +90,75 @@ class UserProcessorTest extends TestCase
         $this->assertSame('User Id', $record->context['user']['id']);
     }
 
-    public function testDomain()
+    public function testDomainFromProviderTakesPriority(): void
     {
-        // todo
+        $user = new User();
+
+        $provider = $this->prophesize(EcsUserProviderInterface::class);
+        $provider->getDomain()->willReturn('provider_domain');
+        $provider->getUser()->willReturn($user);
+
+        $processor = new UserProcessor($provider->reveal(), 'constructor_domain');
+
+        $record = new LogRecord(
+            new \DateTimeImmutable(),
+            'channel',
+            Level::Info,
+            'message',
+            []
+        );
+
+        $record = $processor($record);
+
+        $this->assertArrayHasKey('user', $record->context);
+        $this->assertSame('provider_domain', $record->context['user']->jsonSerialize()['user']['domain']);
+    }
+
+    public function testDomainFallbackToConstructor(): void
+    {
+        $user = new User();
+
+        $provider = $this->prophesize(EcsUserProviderInterface::class);
+        $provider->getDomain()->willReturn(null);
+        $provider->getUser()->willReturn($user);
+
+        $processor = new UserProcessor($provider->reveal(), 'constructor_domain');
+
+        $record = new LogRecord(
+            new \DateTimeImmutable(),
+            'channel',
+            Level::Info,
+            'message',
+            []
+        );
+
+        $record = $processor($record);
+
+        $this->assertArrayHasKey('user', $record->context);
+        $this->assertSame('constructor_domain', $record->context['user']->jsonSerialize()['user']['domain']);
+    }
+
+    public function testNoDomainWhenBothAreNull(): void
+    {
+        $user = new User();
+
+        $provider = $this->prophesize(EcsUserProviderInterface::class);
+        $provider->getDomain()->willReturn(null);
+        $provider->getUser()->willReturn($user);
+
+        $processor = new UserProcessor($provider->reveal(), null);
+
+        $record = new LogRecord(
+            new \DateTimeImmutable(),
+            'channel',
+            Level::Info,
+            'message',
+            []
+        );
+
+        $record = $processor($record);
+
+        $this->assertArrayHasKey('user', $record->context);
+        $this->assertArrayNotHasKey('domain', $record->context['user']->jsonSerialize()['user'] ?? []);
     }
 }

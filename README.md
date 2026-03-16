@@ -1,6 +1,9 @@
 # Ecs Logging Bundle
 
 ![CI](https://github.com/aubes/ecs-logging-bundle/actions/workflows/php.yml/badge.svg)
+[![Latest Stable Version](https://img.shields.io/packagist/v/aubes/ecs-logging-bundle)](https://packagist.org/packages/aubes/ecs-logging-bundle)
+[![License](https://img.shields.io/packagist/l/aubes/ecs-logging-bundle)](https://packagist.org/packages/aubes/ecs-logging-bundle)
+[![PHP Version](https://img.shields.io/packagist/dependency-v/aubes/ecs-logging-bundle/php)](https://packagist.org/packages/aubes/ecs-logging-bundle)
 
 This Symfony bundle provides the [Ecs](https://www.elastic.co/guide/en/ecs/current/ecs-reference.html) log format for Monolog.
 

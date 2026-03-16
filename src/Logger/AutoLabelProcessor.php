@@ -146,7 +146,7 @@ final class AutoLabelProcessor
         self::FIELD_X509,
     ];
 
-    private array $ecsFields;
+    private readonly array $ecsFields;
 
     public function __construct(array $fields)
     {

@@ -9,11 +9,8 @@ use Monolog\LogRecord;
 
 final class ServiceProcessor
 {
-    private Service $service;
-
-    public function __construct(Service $service)
+    public function __construct(private readonly Service $service)
     {
-        $this->service = $service;
     }
 
     public function __invoke(LogRecord $record): LogRecord

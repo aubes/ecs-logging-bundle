@@ -100,4 +100,48 @@ class TracingProcessorTest extends TestCase
 
         $this->assertArrayNotHasKey('tracing', $record->context);
     }
+
+    public function testWithTracingWithoutTransactionIdProcessor()
+    {
+        $processor = new TracingProcessor('tracing');
+
+        $record = new LogRecord(
+            new \DateTimeImmutable(),
+            'channel',
+            Level::Info,
+            'message',
+            [
+                'tracing' => [
+                    'trace_id' => 'abc123',
+                ],
+            ]
+        );
+
+        $record = $processor($record);
+
+        $this->assertArrayHasKey('tracing', $record->context);
+        $this->assertInstanceOf(Tracing::class, $record->context['tracing']);
+    }
+
+    public function testWithAlreadyTransformedTracingProcessor()
+    {
+        $processor = new TracingProcessor('tracing');
+
+        $existingTracing = new Tracing('abc123', 'txn456');
+
+        $record = new LogRecord(
+            new \DateTimeImmutable(),
+            'channel',
+            Level::Info,
+            'message',
+            [
+                'tracing' => $existingTracing,
+            ]
+        );
+
+        $record = $processor($record);
+
+        $this->assertArrayHasKey('tracing', $record->context);
+        $this->assertSame($existingTracing, $record->context['tracing']);
+    }
 }

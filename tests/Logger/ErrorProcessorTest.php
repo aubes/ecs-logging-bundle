@@ -96,4 +96,26 @@ class ErrorProcessorTest extends TestCase
         $this->assertArrayHasKey('context', $record);
         $this->assertArrayNotHasKey('error', $record->context);
     }
+
+    public function testWithAlreadyTransformedErrorProcessor()
+    {
+        $processor = new ErrorProcessor('error');
+
+        $ecsError = new Error(new \Exception('already transformed'));
+
+        $record = new LogRecord(
+            new \DateTimeImmutable(),
+            'channel',
+            Level::Info,
+            'message',
+            [
+                'error' => $ecsError,
+            ]
+        );
+
+        $record = $processor($record);
+
+        $this->assertArrayHasKey('error', $record->context);
+        $this->assertSame($ecsError, $record->context['error']);
+    }
 }

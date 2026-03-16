@@ -95,7 +95,7 @@ final class Configuration implements ConfigurationInterface
     /**
      * @psalm-suppress UndefinedMethod
      */
-    public function addHandlersNode(): NodeDefinition
+    private function addHandlersNode(): NodeDefinition
     {
         $treeBuilder = new TreeBuilder('handlers');
 
@@ -108,7 +108,7 @@ final class Configuration implements ConfigurationInterface
     /**
      * @psalm-suppress UndefinedMethod
      */
-    public function addChannelsNode(): NodeDefinition
+    private function addChannelsNode(): NodeDefinition
     {
         $treeBuilder = new TreeBuilder('channels');
 

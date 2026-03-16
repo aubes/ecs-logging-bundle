@@ -8,11 +8,8 @@ use Monolog\LogRecord;
 
 abstract class AbstractProcessor
 {
-    protected string $fieldName;
-
-    public function __construct(string $fieldName)
+    public function __construct(protected readonly string $fieldName)
     {
-        $this->fieldName = $fieldName;
     }
 
     abstract public function transformValue(mixed $value): mixed;
