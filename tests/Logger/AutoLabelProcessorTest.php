@@ -8,12 +8,9 @@ use Aubes\EcsLoggingBundle\Logger\AutoLabelProcessor;
 use Monolog\Level;
 use Monolog\LogRecord;
 use PHPUnit\Framework\TestCase;
-use Prophecy\PhpUnit\ProphecyTrait;
 
 class AutoLabelProcessorTest extends TestCase
 {
-    use ProphecyTrait;
-
     private function createRecord(array $context): LogRecord
     {
         return new LogRecord(

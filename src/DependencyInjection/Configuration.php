@@ -22,6 +22,7 @@ final class Configuration implements ConfigurationInterface
         $rootNode
             ->children()
                 ->arrayNode('monolog')
+                    ->addDefaultsIfNotSet()
                     ->children()
                         ->arrayNode('channels')
                             ->info('Default logging channel list the processors should be pushed to')

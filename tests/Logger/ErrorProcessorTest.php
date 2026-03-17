@@ -9,12 +9,9 @@ use Elastic\Types\Error;
 use Monolog\Level;
 use Monolog\LogRecord;
 use PHPUnit\Framework\TestCase;
-use Prophecy\PhpUnit\ProphecyTrait;
 
 class ErrorProcessorTest extends TestCase
 {
-    use ProphecyTrait;
-
     public function testWithErrorProcessor()
     {
         $processor = new ErrorProcessor('error');

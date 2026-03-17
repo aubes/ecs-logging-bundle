@@ -9,13 +9,10 @@ use Elastic\Types\Tracing;
 use Monolog\Level;
 use Monolog\LogRecord;
 use PHPUnit\Framework\TestCase;
-use Prophecy\PhpUnit\ProphecyTrait;
 
 class TracingProcessorTest extends TestCase
 {
-    use ProphecyTrait;
-
-    public function testWithTracingProcessor()
+    public function testWithTracingProcessor(): void
     {
         $processor = new TracingProcessor('tracing');
 
@@ -38,7 +35,7 @@ class TracingProcessorTest extends TestCase
         $this->assertInstanceOf(Tracing::class, $record->context['tracing']);
     }
 
-    public function testWithTracingRenameProcessor()
+    public function testWithTracingRenameProcessor(): void
     {
         $processor = new TracingProcessor('trace_custom');
 
@@ -62,7 +59,7 @@ class TracingProcessorTest extends TestCase
         $this->assertInstanceOf(Tracing::class, $record->context['tracing']);
     }
 
-    public function testWithoutTracingProcessor()
+    public function testWithoutTracingProcessor(): void
     {
         $processor = new TracingProcessor('tracing');
 
@@ -79,7 +76,7 @@ class TracingProcessorTest extends TestCase
         $this->assertArrayNotHasKey('tracing', $record->context);
     }
 
-    public function testWithTracingWithoutTraceIdProcessor()
+    public function testWithTracingWithoutTraceIdProcessor(): void
     {
         $processor = new TracingProcessor('tracing');
 
@@ -101,7 +98,7 @@ class TracingProcessorTest extends TestCase
         $this->assertArrayNotHasKey('tracing', $record->context);
     }
 
-    public function testWithTracingWithoutTransactionIdProcessor()
+    public function testWithTracingWithoutTransactionIdProcessor(): void
     {
         $processor = new TracingProcessor('tracing');
 
@@ -123,7 +120,7 @@ class TracingProcessorTest extends TestCase
         $this->assertInstanceOf(Tracing::class, $record->context['tracing']);
     }
 
-    public function testWithAlreadyTransformedTracingProcessor()
+    public function testWithAlreadyTransformedTracingProcessor(): void
     {
         $processor = new TracingProcessor('tracing');
 
