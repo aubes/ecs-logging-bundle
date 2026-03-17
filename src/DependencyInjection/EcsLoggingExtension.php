@@ -56,7 +56,7 @@ final class EcsLoggingExtension extends Extension
         $processor = new Definition(AutoLabelProcessor::class);
         $processor->setArgument('$fields', $processorConfig['fields']);
 
-        $this->configureMonologProcessor($config, $processorConfig, $processor);
+        $this->configureMonologProcessor($config, $processorConfig, $processor, -10);
 
         $container->setDefinition('.ecs_logging.processor.auto_label', $processor);
     }
@@ -168,16 +168,16 @@ final class EcsLoggingExtension extends Extension
         $container->setDefinition('.ecs_logging.processor.user', $processor);
     }
 
-    private function configureMonologProcessor(array $config, array $configOverride, Definition $processor): void
+    private function configureMonologProcessor(array $config, array $configOverride, Definition $processor, int $priority = 0): void
     {
         $channels = !empty($configOverride['channels']) ? $configOverride['channels'] : $config['monolog']['channels'];
         foreach ($channels as $channel) {
-            $processor->addTag('monolog.processor', ['channel' => $channel]);
+            $processor->addTag('monolog.processor', ['channel' => $channel, 'priority' => $priority]);
         }
 
         $handlers = !empty($configOverride['handlers']) ? $configOverride['handlers'] : $config['monolog']['handlers'];
         foreach ($handlers as $handler) {
-            $processor->addTag('monolog.processor', ['handler' => $handler]);
+            $processor->addTag('monolog.processor', ['handler' => $handler, 'priority' => $priority]);
         }
     }
 }

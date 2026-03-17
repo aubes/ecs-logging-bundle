@@ -110,6 +110,19 @@ class AutoLabelProcessorTest extends TestCase
         $this->assertArrayNotHasKey('unexpected', $record->context);
     }
 
+    public function testInvalidLabelsThrowsException(): void
+    {
+        // 'labels' is declared as an ECS field (stays in context), but holds a non-array value
+        $processor = new AutoLabelProcessor(['labels']);
+
+        $record = $this->createRecord(['labels' => 'not-an-array', 'foo' => 'bar']);
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('The "labels" context field must be an array, "string" given.');
+
+        $processor($record);
+    }
+
     public function testExistingLabelsAreMerged(): void
     {
         $processor = new AutoLabelProcessor(['labels']);
