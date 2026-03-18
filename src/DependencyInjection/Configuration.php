@@ -22,6 +22,7 @@ final class Configuration implements ConfigurationInterface
         $rootNode
             ->children()
                 ->arrayNode('monolog')
+                    ->addDefaultsIfNotSet()
                     ->children()
                         ->arrayNode('channels')
                             ->info('Default logging channel list the processors should be pushed to')
@@ -95,7 +96,7 @@ final class Configuration implements ConfigurationInterface
     /**
      * @psalm-suppress UndefinedMethod
      */
-    public function addHandlersNode(): NodeDefinition
+    private function addHandlersNode(): NodeDefinition
     {
         $treeBuilder = new TreeBuilder('handlers');
 
@@ -108,7 +109,7 @@ final class Configuration implements ConfigurationInterface
     /**
      * @psalm-suppress UndefinedMethod
      */
-    public function addChannelsNode(): NodeDefinition
+    private function addChannelsNode(): NodeDefinition
     {
         $treeBuilder = new TreeBuilder('channels');
 

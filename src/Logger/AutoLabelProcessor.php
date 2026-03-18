@@ -146,7 +146,7 @@ final class AutoLabelProcessor
         self::FIELD_X509,
     ];
 
-    private array $ecsFields;
+    private readonly array $ecsFields;
 
     public function __construct(array $fields)
     {
@@ -156,12 +156,28 @@ final class AutoLabelProcessor
     public function __invoke(LogRecord $record): LogRecord
     {
         $context = $record->context;
+        $nonEcsFields = [];
+
         foreach ($context as $contextName => $contextValue) {
             if (!isset($this->ecsFields[$contextName])) {
-                $context['labels'][$contextName] = $contextValue;
-                unset($context[$contextName]);
+                $nonEcsFields[$contextName] = $contextValue;
             }
         }
+
+        if (empty($nonEcsFields)) {
+            return $record;
+        }
+
+        foreach (\array_keys($nonEcsFields) as $contextName) {
+            unset($context[$contextName]);
+        }
+
+        $existingLabels = $context['labels'] ?? [];
+        if (!\is_array($existingLabels)) {
+            throw new \InvalidArgumentException(\sprintf('The "labels" context field must be an array, "%s" given.', \get_debug_type($existingLabels)));
+        }
+
+        $context['labels'] = \array_merge($existingLabels, $nonEcsFields);
 
         return $record->with(context: $context);
     }
