@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.0.1]
+
+### Fixed
+
+- Per-processor `channels`/`handlers` routing no longer inherits global defaults when the processor defines its own routing. Previously, a processor with only `handlers` configured would also inherit global `channels`, causing an "cannot target both channels and handlers" error.
+
 ## [3.0.0]
 
 ### Breaking Changes
