@@ -12,7 +12,7 @@ use PHPUnit\Framework\TestCase;
 
 class ErrorProcessorTest extends TestCase
 {
-    public function testWithErrorProcessor()
+    public function testWithErrorProcessor(): void
     {
         $processor = new ErrorProcessor('error');
 
@@ -32,7 +32,7 @@ class ErrorProcessorTest extends TestCase
         $this->assertInstanceOf(Error::class, $record->context['error']);
     }
 
-    public function testWithErrorRenameProcessor()
+    public function testWithErrorRenameProcessor(): void
     {
         $processor = new ErrorProcessor('error_custom');
 
@@ -53,7 +53,7 @@ class ErrorProcessorTest extends TestCase
         $this->assertInstanceOf(Error::class, $record->context['error']);
     }
 
-    public function testWithoutErrorProcessor()
+    public function testWithoutErrorProcessor(): void
     {
         $processor = new ErrorProcessor('error');
 
@@ -71,7 +71,7 @@ class ErrorProcessorTest extends TestCase
         $this->assertArrayNotHasKey('error', $record->context);
     }
 
-    public function testWithNonThrowableErrorProcessor()
+    public function testWithNonThrowableErrorProcessor(): void
     {
         $processor = new ErrorProcessor('error');
 
@@ -85,16 +85,12 @@ class ErrorProcessorTest extends TestCase
             ]
         );
 
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('error must be an instance of Throwable');
-
         $record = $processor($record);
 
-        $this->assertArrayHasKey('context', $record);
-        $this->assertArrayNotHasKey('error', $record->context);
+        $this->assertSame('Not Throwable', $record->context['error']);
     }
 
-    public function testWithAlreadyTransformedErrorProcessor()
+    public function testWithAlreadyTransformedErrorProcessor(): void
     {
         $processor = new ErrorProcessor('error');
 
@@ -114,5 +110,68 @@ class ErrorProcessorTest extends TestCase
 
         $this->assertArrayHasKey('error', $record->context);
         $this->assertSame($ecsError, $record->context['error']);
+    }
+
+    public function testMapExceptionKeyProcessesExceptionContext(): void
+    {
+        $processor = new ErrorProcessor('error', mapExceptionKey: true);
+
+        $record = new LogRecord(
+            new \DateTimeImmutable(),
+            'channel',
+            Level::Info,
+            'message',
+            [
+                'exception' => new \Exception('from symfony'),
+            ]
+        );
+
+        $record = $processor($record);
+
+        $this->assertArrayHasKey('error', $record->context);
+        $this->assertInstanceOf(Error::class, $record->context['error']);
+        $this->assertArrayNotHasKey('exception', $record->context);
+    }
+
+    public function testMapExceptionKeyIsSkippedWhenTargetAlreadySet(): void
+    {
+        $processor = new ErrorProcessor('error', mapExceptionKey: true);
+
+        $record = new LogRecord(
+            new \DateTimeImmutable(),
+            'channel',
+            Level::Info,
+            'message',
+            [
+                'error' => new \RuntimeException('primary'),
+                'exception' => new \Exception('should be ignored'),
+            ]
+        );
+
+        $record = $processor($record);
+
+        $this->assertArrayHasKey('error', $record->context);
+        $this->assertInstanceOf(Error::class, $record->context['error']);
+        $this->assertArrayHasKey('exception', $record->context);
+    }
+
+    public function testMapExceptionKeyIsSkippedWhenNotThrowable(): void
+    {
+        $processor = new ErrorProcessor('error', mapExceptionKey: true);
+
+        $record = new LogRecord(
+            new \DateTimeImmutable(),
+            'channel',
+            Level::Info,
+            'message',
+            [
+                'exception' => 'not a throwable',
+            ]
+        );
+
+        $record = $processor($record);
+
+        $this->assertArrayNotHasKey('error', $record->context);
+        $this->assertArrayHasKey('exception', $record->context);
     }
 }

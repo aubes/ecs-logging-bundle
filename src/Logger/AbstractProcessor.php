@@ -8,15 +8,20 @@ use Monolog\LogRecord;
 
 abstract class AbstractProcessor
 {
-    public function __construct(protected readonly string $fieldName)
-    {
+    public function __construct(
+        protected readonly string $fieldName,
+        private readonly string $targetField,
+    ) {
     }
 
-    abstract public function transformValue(mixed $value): mixed;
+    abstract protected function transformValue(mixed $value): mixed;
 
-    abstract public function support(LogRecord $record): bool;
+    abstract protected function support(LogRecord $record): bool;
 
-    abstract public function getTargetField(): string;
+    final protected function getTargetField(): string
+    {
+        return $this->targetField;
+    }
 
     public function __invoke(LogRecord $record): LogRecord
     {
@@ -25,7 +30,7 @@ abstract class AbstractProcessor
         }
 
         $context = $record->context;
-        $targetField = $this->getTargetField();
+        $targetField = $this->targetField;
         $context[$targetField] = $this->transformValue($record->context[$this->fieldName]);
 
         if ($this->fieldName !== $targetField) {

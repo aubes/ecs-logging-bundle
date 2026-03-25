@@ -5,17 +5,28 @@ declare(strict_types=1);
 namespace Aubes\EcsLoggingBundle\Logger;
 
 use Aubes\EcsLoggingBundle\Security\EcsUserProviderInterface;
+use Elastic\Types\User;
 use Monolog\LogRecord;
+use Symfony\Contracts\Service\ResetInterface;
 
-final class UserProcessor
+final class UserProcessor implements ResetInterface
 {
+    private ?User $lastUser = null;
+    private ?string $lastDomain = null;
+
     public function __construct(
         private readonly EcsUserProviderInterface $provider,
         private readonly ?string $domain = null,
     ) {
     }
 
-    public function support(LogRecord $record): bool
+    public function reset(): void
+    {
+        $this->lastUser = null;
+        $this->lastDomain = null;
+    }
+
+    private function support(LogRecord $record): bool
     {
         return !isset($record->context['user']);
     }
@@ -32,9 +43,13 @@ final class UserProcessor
             return $record;
         }
 
-        $domain = $this->provider->getDomain() ?? $this->domain;
-        if ($domain !== null) {
-            $ecsUser->setDomain($domain);
+        if ($ecsUser !== $this->lastUser) {
+            $this->lastUser = $ecsUser;
+            $this->lastDomain = $this->provider->getDomain() ?? $this->domain;
+
+            if ($this->lastDomain !== null) {
+                $ecsUser->setDomain($this->lastDomain);
+            }
         }
 
         $context = $record->context;

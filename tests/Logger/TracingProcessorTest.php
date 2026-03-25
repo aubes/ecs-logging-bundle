@@ -90,12 +90,10 @@ class TracingProcessorTest extends TestCase
             ]
         );
 
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('trace_id is required when tracing is provided');
-
         $record = $processor($record);
 
-        $this->assertArrayNotHasKey('tracing', $record->context);
+        $this->assertSame([], $record->context['tracing']);
+        $this->assertArrayNotHasKey('span', $record->context);
     }
 
     public function testWithTracingWithoutTransactionIdProcessor(): void
@@ -118,6 +116,74 @@ class TracingProcessorTest extends TestCase
 
         $this->assertArrayHasKey('tracing', $record->context);
         $this->assertInstanceOf(Tracing::class, $record->context['tracing']);
+    }
+
+    public function testWithSpanId(): void
+    {
+        $processor = new TracingProcessor('tracing');
+
+        $record = new LogRecord(
+            new \DateTimeImmutable(),
+            'channel',
+            Level::Info,
+            'message',
+            [
+                'tracing' => [
+                    'trace_id' => 'abc123',
+                    'transaction_id' => 'txn456',
+                    'span_id' => 'span789',
+                ],
+            ]
+        );
+
+        $record = $processor($record);
+
+        $this->assertArrayHasKey('span', $record->context);
+        $this->assertSame('span789', $record->context['span']['id']);
+    }
+
+    public function testWithoutSpanIdNoSpanContext(): void
+    {
+        $processor = new TracingProcessor('tracing');
+
+        $record = new LogRecord(
+            new \DateTimeImmutable(),
+            'channel',
+            Level::Info,
+            'message',
+            [
+                'tracing' => [
+                    'trace_id' => 'abc123',
+                ],
+            ]
+        );
+
+        $record = $processor($record);
+
+        $this->assertArrayNotHasKey('span', $record->context);
+    }
+
+    public function testSpanNotOverwrittenIfAlreadyPresent(): void
+    {
+        $processor = new TracingProcessor('tracing');
+
+        $record = new LogRecord(
+            new \DateTimeImmutable(),
+            'channel',
+            Level::Info,
+            'message',
+            [
+                'tracing' => [
+                    'trace_id' => 'abc123',
+                    'span_id' => 'new-span',
+                ],
+                'span' => ['id' => 'existing-span'],
+            ]
+        );
+
+        $record = $processor($record);
+
+        $this->assertSame('existing-span', $record->context['span']['id']);
     }
 
     public function testWithAlreadyTransformedTracingProcessor(): void
