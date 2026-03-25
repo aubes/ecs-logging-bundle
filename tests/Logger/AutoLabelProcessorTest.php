@@ -11,6 +11,7 @@ use PHPUnit\Framework\TestCase;
 
 class AutoLabelProcessorTest extends TestCase
 {
+    /** @param array<string, mixed> $context */
     private function createRecord(array $context): LogRecord
     {
         return new LogRecord(
@@ -22,21 +23,37 @@ class AutoLabelProcessorTest extends TestCase
         );
     }
 
-    public function testNonEcsFieldsAreMovedToLabels(): void
+    /**
+     * @param array<string, mixed> $context
+     * @param array<string, mixed> $extra
+     */
+    private function createRecordWithExtra(array $context, array $extra): LogRecord
+    {
+        return new LogRecord(
+            new \DateTimeImmutable(),
+            'channel',
+            Level::Info,
+            'message',
+            $context,
+            $extra,
+        );
+    }
+
+    // --- Default behavior: drop ---
+
+    public function testNonEcsFieldsAreDroppedByDefault(): void
     {
         $processor = new AutoLabelProcessor([]);
 
         $record = $this->createRecord(['foo' => 'bar', 'baz' => 'qux']);
         $record = $processor($record);
 
-        $this->assertArrayHasKey('labels', $record->context);
-        $this->assertSame('bar', $record->context['labels']['foo']);
-        $this->assertSame('qux', $record->context['labels']['baz']);
         $this->assertArrayNotHasKey('foo', $record->context);
         $this->assertArrayNotHasKey('baz', $record->context);
+        $this->assertArrayNotHasKey('labels', $record->context);
     }
 
-    public function testEcsFieldsAreNotMoved(): void
+    public function testEcsFieldsAreKeptAndNonEcsFieldsAreDropped(): void
     {
         $processor = new AutoLabelProcessor(['service', 'error']);
 
@@ -45,9 +62,8 @@ class AutoLabelProcessorTest extends TestCase
 
         $this->assertArrayHasKey('service', $record->context);
         $this->assertArrayHasKey('error', $record->context);
-        $this->assertArrayHasKey('labels', $record->context);
-        $this->assertSame('value', $record->context['labels']['custom']);
         $this->assertArrayNotHasKey('custom', $record->context);
+        $this->assertArrayNotHasKey('labels', $record->context);
     }
 
     public function testEmptyContextIsUnchanged(): void
@@ -72,27 +88,25 @@ class AutoLabelProcessorTest extends TestCase
         $this->assertArrayNotHasKey('labels', $record->context);
     }
 
-    public function testFieldsMinimalConstant(): void
-    {
-        $processor = new AutoLabelProcessor(AutoLabelProcessor::FIELDS_MINIMAL);
+    // --- Move-to-labels behavior ---
 
-        $record = $this->createRecord([
-            'message' => 'text',
-            'service' => 'svc',
-            'custom_field' => 'moved',
-        ]);
+    public function testNonEcsFieldsAreMovedToLabelsWhenEnabled(): void
+    {
+        $processor = new AutoLabelProcessor([], moveToLabels: true);
+
+        $record = $this->createRecord(['foo' => 'bar', 'baz' => 'qux']);
         $record = $processor($record);
 
-        $this->assertArrayHasKey('message', $record->context);
-        $this->assertArrayHasKey('service', $record->context);
         $this->assertArrayHasKey('labels', $record->context);
-        $this->assertSame('moved', $record->context['labels']['custom_field']);
-        $this->assertArrayNotHasKey('custom_field', $record->context);
+        $this->assertSame('bar', $record->context['labels']['foo']);
+        $this->assertSame('qux', $record->context['labels']['baz']);
+        $this->assertArrayNotHasKey('foo', $record->context);
+        $this->assertArrayNotHasKey('baz', $record->context);
     }
 
     public function testFieldsBundleConstant(): void
     {
-        $processor = new AutoLabelProcessor(AutoLabelProcessor::FIELDS_BUNDLE);
+        $processor = new AutoLabelProcessor(AutoLabelProcessor::FIELDS_BUNDLE, moveToLabels: true);
 
         $record = $this->createRecord([
             'error' => 'some-error',
@@ -107,22 +121,21 @@ class AutoLabelProcessorTest extends TestCase
         $this->assertArrayNotHasKey('unexpected', $record->context);
     }
 
-    public function testInvalidLabelsThrowsException(): void
+    public function testInvalidLabelsIsOverwritten(): void
     {
-        // 'labels' is declared as an ECS field (stays in context), but holds a non-array value
-        $processor = new AutoLabelProcessor(['labels']);
+        // 'labels' holds a non-array value (already invalid ECS) — must be silently overwritten
+        $processor = new AutoLabelProcessor(['labels'], moveToLabels: true);
 
         $record = $this->createRecord(['labels' => 'not-an-array', 'foo' => 'bar']);
+        $record = $processor($record);
 
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('The "labels" context field must be an array, "string" given.');
-
-        $processor($record);
+        $this->assertIsArray($record->context['labels']);
+        $this->assertSame('bar', $record->context['labels']['foo']);
     }
 
     public function testExistingLabelsAreMerged(): void
     {
-        $processor = new AutoLabelProcessor(['labels']);
+        $processor = new AutoLabelProcessor(['labels'], moveToLabels: true);
 
         $record = $this->createRecord([
             'labels' => ['existing' => 'value'],
@@ -133,5 +146,169 @@ class AutoLabelProcessorTest extends TestCase
         $this->assertArrayHasKey('labels', $record->context);
         $this->assertSame('value', $record->context['labels']['existing']);
         $this->assertSame('new_value', $record->context['labels']['new_field']);
+    }
+
+    public function testExistingLabelsWinOnKeyCollision(): void
+    {
+        $processor = new AutoLabelProcessor(['labels'], moveToLabels: true);
+
+        $record = $this->createRecord([
+            'labels' => ['foo' => 'explicit'],
+            'foo' => 'auto-moved',
+        ]);
+        $record = $processor($record);
+
+        // The explicitly set label must not be overwritten by the auto-moved field.
+        $this->assertSame('explicit', $record->context['labels']['foo']);
+    }
+
+    // --- include_extra ---
+
+    public function testIncludeExtraIsDisabledByDefault(): void
+    {
+        $processor = new AutoLabelProcessor([]);
+
+        $record = $this->createRecordWithExtra([], ['process_id' => 42]);
+        $record = $processor($record);
+
+        $this->assertArrayNotHasKey('labels', $record->context);
+        $this->assertArrayHasKey('process_id', $record->extra);
+    }
+
+    public function testIncludeExtraDropsNonEcsExtraKeysByDefault(): void
+    {
+        $processor = new AutoLabelProcessor([], includeExtra: true);
+
+        $record = $this->createRecordWithExtra([], ['process_id' => 42, 'memory_usage' => '8 MB']);
+        $record = $processor($record);
+
+        $this->assertArrayNotHasKey('labels', $record->context);
+        $this->assertArrayNotHasKey('process_id', $record->extra);
+        $this->assertArrayNotHasKey('memory_usage', $record->extra);
+    }
+
+    public function testIncludeExtraMovesNonEcsExtraKeysToLabels(): void
+    {
+        $processor = new AutoLabelProcessor([], moveToLabels: true, includeExtra: true);
+
+        $record = $this->createRecordWithExtra([], ['process_id' => 42, 'memory_usage' => '8 MB']);
+        $record = $processor($record);
+
+        $this->assertSame(42, $record->context['labels']['process_id']);
+        $this->assertSame('8 MB', $record->context['labels']['memory_usage']);
+        $this->assertArrayNotHasKey('process_id', $record->extra);
+        $this->assertArrayNotHasKey('memory_usage', $record->extra);
+    }
+
+    public function testIncludeExtraPreservesEcsExtraKeys(): void
+    {
+        $processor = new AutoLabelProcessor(['process'], moveToLabels: true, includeExtra: true);
+
+        $record = $this->createRecordWithExtra([], ['process' => ['pid' => 42], 'uid' => 'abc']);
+        $record = $processor($record);
+
+        $this->assertArrayHasKey('process', $record->extra);
+        $this->assertSame('abc', $record->context['labels']['uid']);
+        $this->assertArrayNotHasKey('uid', $record->extra);
+    }
+
+    public function testIncludeExtraMergesWithExistingContextLabels(): void
+    {
+        $processor = new AutoLabelProcessor(['labels'], moveToLabels: true, includeExtra: true);
+
+        $record = $this->createRecordWithExtra(
+            ['labels' => ['existing' => 'value']],
+            ['extra_key' => 'extra_value'],
+        );
+        $record = $processor($record);
+
+        $this->assertSame('value', $record->context['labels']['existing']);
+        $this->assertSame('extra_value', $record->context['labels']['extra_key']);
+    }
+
+    public function testIncludeExtraWithEmptyExtraIsUnchanged(): void
+    {
+        $processor = new AutoLabelProcessor([], includeExtra: true);
+
+        $record = $this->createRecordWithExtra([], []);
+        $record = $processor($record);
+
+        $this->assertSame([], $record->context);
+        $this->assertSame([], $record->extra);
+    }
+
+    // --- non_scalar_strategy ---
+
+    public function testSkipStrategyIsDefault(): void
+    {
+        $processor = new AutoLabelProcessor([]);
+
+        $record = $this->createRecord(['foo' => ['nested' => 'array']]);
+        $record = $processor($record);
+
+        $this->assertArrayNotHasKey('foo', $record->context);
+        $this->assertArrayNotHasKey('labels', $record->context);
+    }
+
+    public function testSkipStrategyRemovesNonScalarContextFields(): void
+    {
+        $processor = new AutoLabelProcessor([], moveToLabels: true, nonScalarStrategy: AutoLabelProcessor::STRATEGY_SKIP);
+
+        $record = $this->createRecord(['obj' => new \stdClass(), 'scalar' => 'ok']);
+        $record = $processor($record);
+
+        // non-scalar field is removed from context and not added to labels
+        $this->assertArrayNotHasKey('obj', $record->context);
+        $this->assertArrayNotHasKey('obj', $record->context['labels'] ?? []);
+        // scalar non-ECS field is moved to labels
+        $this->assertSame('ok', $record->context['labels']['scalar']);
+    }
+
+    public function testJsonStrategyConvertsNonScalarToString(): void
+    {
+        $processor = new AutoLabelProcessor([], moveToLabels: true, nonScalarStrategy: AutoLabelProcessor::STRATEGY_JSON);
+
+        $record = $this->createRecord(['meta' => ['key' => 'value'], 'scalar' => 'ok']);
+        $record = $processor($record);
+
+        $this->assertArrayNotHasKey('meta', $record->context);
+        $this->assertSame('{"key":"value"}', $record->context['labels']['meta']);
+        $this->assertSame('ok', $record->context['labels']['scalar']);
+    }
+
+    public function testJsonStrategyFallsBackToSkipOnEncodingFailure(): void
+    {
+        $processor = new AutoLabelProcessor([], moveToLabels: true, nonScalarStrategy: AutoLabelProcessor::STRATEGY_JSON);
+
+        // Object with circular reference cannot be json_encoded
+        $obj = new \stdClass();
+        $obj->self = $obj;
+        $record = $this->createRecord(['bad' => $obj]);
+        $record = $processor($record);
+
+        $this->assertArrayNotHasKey('bad', $record->context);
+        $this->assertArrayNotHasKey('labels', $record->context);
+    }
+
+    public function testSkipStrategyRemovesNonScalarExtraFields(): void
+    {
+        $processor = new AutoLabelProcessor([], includeExtra: true, nonScalarStrategy: AutoLabelProcessor::STRATEGY_SKIP);
+
+        $record = $this->createRecordWithExtra([], ['obj' => new \stdClass()]);
+        $record = $processor($record);
+
+        $this->assertArrayNotHasKey('obj', $record->extra);
+        $this->assertArrayNotHasKey('labels', $record->context);
+    }
+
+    public function testJsonStrategyConvertsNonScalarExtraToString(): void
+    {
+        $processor = new AutoLabelProcessor([], moveToLabels: true, includeExtra: true, nonScalarStrategy: AutoLabelProcessor::STRATEGY_JSON);
+
+        $record = $this->createRecordWithExtra([], ['meta' => ['k' => 'v']]);
+        $record = $processor($record);
+
+        $this->assertArrayNotHasKey('meta', $record->extra);
+        $this->assertSame('{"k":"v"}', $record->context['labels']['meta']);
     }
 }

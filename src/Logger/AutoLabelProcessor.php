@@ -25,19 +25,24 @@ final class AutoLabelProcessor
     public const FIELD_DNS = 'dns';
     public const FIELD_ECS = 'ecs';
     public const FIELD_ELF = 'elf';
+    public const FIELD_ENTITY = 'entity';
     public const FIELD_EMAIL = 'email';
     public const FIELD_ERROR = 'error';
     public const FIELD_EVENT = 'event';
     public const FIELD_FAAS = 'faas';
+    public const FIELD_GEN_AI = 'gen_ai';
     public const FIELD_FILE = 'file';
     public const FIELD_GEO = 'geo';
     public const FIELD_GROUP = 'group';
     public const FIELD_HASH = 'hash';
     public const FIELD_HOST = 'host';
     public const FIELD_HTTP = 'http';
+    /**
+     * Not a top-level ECS field set — `interface` is a sub-object of `observer.ingress/egress`.
+     * Kept for BC but excluded from FIELDS_ALL.
+     */
     public const FIELD_INTERFACE = 'interface';
     public const FIELD_LOG = 'log';
-    public const FIELD_MATCHO = 'matcho';
     public const FIELD_NETWORK = 'network';
     public const FIELD_OBSERVER = 'observer';
     public const FIELD_ORCHESTRATOR = 'orchestrator';
@@ -57,32 +62,53 @@ final class AutoLabelProcessor
     public const FIELD_TLS = 'tls';
     public const FIELD_SPAN = 'span';
     public const FIELD_TRACE = 'trace';
+    /**
+     * Not an ECS field set — bundle-internal transport key used by TracingProcessor.
+     * ElasticCommonSchemaFormatter hardcodes context['tracing'] to detect Elastic\Types\Tracing objects.
+     * Automatically excluded from auto-labeling via FIELDS_INTERNAL — users do not need to whitelist it.
+     */
     public const FIELD_TRACING = 'tracing';
     public const FIELD_TRANSACTION = 'transaction';
     public const FIELD_URL = 'url';
     public const FIELD_USER = 'user';
     public const FIELD_USER_AGENT = 'user_agent';
+    /**
+     * Not a top-level ECS field set — `vlan` is a sub-object of `network.vlan`.
+     * Kept for BC but excluded from FIELDS_ALL.
+     */
     public const FIELD_VLAN = 'vlan';
     public const FIELD_VULNERABILITY = 'vulnerability';
     public const FIELD_X509 = 'x509';
 
-    public const FIELDS_MINIMAL = [
-        self::FIELD_LOG,
-        self::FIELD_MESSAGE,
-        self::FIELD_SERVICE,
-        self::FIELD_TIMESTAMP,
+    /**
+     * Fields injected by bundle processors that must never be moved to labels, regardless of the user's field list.
+     * AutoLabelProcessor always merges this list into its whitelist automatically.
+     *
+     * - FIELD_TRACING: non-ECS transport key required by ElasticCommonSchemaFormatter to serialize Tracing objects.
+     * - FIELD_SPAN:    injected by TracingProcessor when span_id is provided.
+     */
+    public const FIELDS_INTERNAL = [
+        self::FIELD_TRACING,
+        self::FIELD_SPAN,
     ];
 
+    public const MODE_BUNDLE = 'bundle';
+    public const MODE_FULL = 'full';
+    public const MODE_CUSTOM = 'custom';
+
     public const FIELDS_BUNDLE = [
+        self::FIELD_CLIENT,
         self::FIELD_ERROR,
+        self::FIELD_HOST,
+        self::FIELD_HTTP,
         self::FIELD_LABELS,
         self::FIELD_LOG,
         self::FIELD_MESSAGE,
         self::FIELD_SERVICE,
         self::FIELD_TIMESTAMP,
         self::FIELD_TRACE,
-        self::FIELD_TRACING,
         self::FIELD_TRANSACTION,
+        self::FIELD_URL,
         self::FIELD_USER,
     ];
 
@@ -104,24 +130,23 @@ final class AutoLabelProcessor
         self::FIELD_DNS,
         self::FIELD_ECS,
         self::FIELD_ELF,
+        self::FIELD_ENTITY,
         self::FIELD_EMAIL,
         self::FIELD_ERROR,
         self::FIELD_EVENT,
         self::FIELD_FAAS,
         self::FIELD_FILE,
+        self::FIELD_GEN_AI,
         self::FIELD_GEO,
         self::FIELD_GROUP,
         self::FIELD_HASH,
         self::FIELD_HOST,
         self::FIELD_HTTP,
-        self::FIELD_INTERFACE,
         self::FIELD_LOG,
-        self::FIELD_MATCHO,
         self::FIELD_NETWORK,
         self::FIELD_OBSERVER,
         self::FIELD_ORCHESTRATOR,
         self::FIELD_ORGANIZATION,
-        self::FIELD_OS,
         self::FIELD_PACKAGE,
         self::FIELD_PE,
         self::FIELD_PROCESS,
@@ -136,49 +161,86 @@ final class AutoLabelProcessor
         self::FIELD_TLS,
         self::FIELD_SPAN,
         self::FIELD_TRACE,
-        self::FIELD_TRACING,
         self::FIELD_TRANSACTION,
         self::FIELD_URL,
         self::FIELD_USER,
         self::FIELD_USER_AGENT,
-        self::FIELD_VLAN,
         self::FIELD_VULNERABILITY,
         self::FIELD_X509,
     ];
 
-    private readonly array $ecsFields;
+    public const STRATEGY_SKIP = 'skip';
+    public const STRATEGY_JSON = 'json';
 
-    public function __construct(array $fields)
-    {
-        $this->ecsFields = \array_flip($fields);
+    /** @var array<string, int> */
+    private readonly array $ecsFields;
+    private readonly bool $encodeAsJson;
+
+    /** @param list<string> $fields */
+    public function __construct(
+        array $fields,
+        private readonly bool $moveToLabels = false,
+        string $nonScalarStrategy = self::STRATEGY_SKIP,
+        private readonly bool $includeExtra = false,
+    ) {
+        $this->ecsFields = \array_flip(\array_merge($fields, self::FIELDS_INTERNAL));
+        $this->encodeAsJson = $nonScalarStrategy === self::STRATEGY_JSON;
     }
 
     public function __invoke(LogRecord $record): LogRecord
     {
         $context = $record->context;
-        $nonEcsFields = [];
+        $extra = $record->extra;
 
-        foreach ($context as $contextName => $contextValue) {
-            if (!isset($this->ecsFields[$contextName])) {
-                $nonEcsFields[$contextName] = $contextValue;
-            }
-        }
+        $nonEcsContext = \array_diff_key($context, $this->ecsFields);
+        $nonEcsExtra = $this->includeExtra ? \array_diff_key($extra, $this->ecsFields) : [];
 
-        if (empty($nonEcsFields)) {
+        if (empty($nonEcsContext) && empty($nonEcsExtra)) {
             return $record;
         }
 
-        foreach (\array_keys($nonEcsFields) as $contextName) {
-            unset($context[$contextName]);
+        $context = \array_diff_key($context, $nonEcsContext);
+        $extra = \array_diff_key($extra, $nonEcsExtra);
+
+        if ($this->moveToLabels) {
+            $labels = \array_merge(
+                $this->toScalarLabels($nonEcsContext),
+                $this->toScalarLabels($nonEcsExtra),
+            );
+            if (!empty($labels)) {
+                $existingLabels = $context['labels'] ?? [];
+                if (!\is_array($existingLabels)) {
+                    $existingLabels = [];
+                }
+                $context['labels'] = \array_merge($labels, $existingLabels);
+            }
         }
 
-        $existingLabels = $context['labels'] ?? [];
-        if (!\is_array($existingLabels)) {
-            throw new \InvalidArgumentException(\sprintf('The "labels" context field must be an array, "%s" given.', \get_debug_type($existingLabels)));
+        return $record->with(context: $context, extra: $extra);
+    }
+
+    /**
+     * @param array<string, mixed> $fields
+     *
+     * @return array<string, scalar>
+     */
+    private function toScalarLabels(array $fields): array
+    {
+        $labels = [];
+
+        foreach ($fields as $name => $value) {
+            if (\is_scalar($value)) {
+                $labels[$name] = $value;
+                continue;
+            }
+            if ($this->encodeAsJson) {
+                $encoded = \json_encode($value);
+                if ($encoded !== false) {
+                    $labels[$name] = $encoded;
+                }
+            }
         }
 
-        $context['labels'] = \array_merge($existingLabels, $nonEcsFields);
-
-        return $record->with(context: $context);
+        return $labels;
     }
 }

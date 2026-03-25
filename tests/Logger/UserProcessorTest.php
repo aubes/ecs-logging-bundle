@@ -10,31 +10,29 @@ use Elastic\Types\User;
 use Monolog\Level;
 use Monolog\LogRecord;
 use PHPUnit\Framework\TestCase;
-use Prophecy\PhpUnit\ProphecyTrait;
 
 class UserProcessorTest extends TestCase
 {
-    use ProphecyTrait;
+    /** @param array<string, mixed> $context */
+    private function makeRecord(array $context = []): LogRecord
+    {
+        return new LogRecord(new \DateTimeImmutable(), 'channel', Level::Info, 'message', $context);
+    }
+
+    private function makeProvider(?User $user, ?string $domain = null): EcsUserProviderInterface
+    {
+        $provider = $this->createStub(EcsUserProviderInterface::class);
+        $provider->method('getUser')->willReturn($user);
+        $provider->method('getDomain')->willReturn($domain);
+
+        return $provider;
+    }
 
     public function testWithUserProcessor(): void
     {
-        $user = $this->prophesize(User::class);
+        $processor = new UserProcessor($this->makeProvider(new User(), 'in_memory'), 'unknown');
 
-        $provider = $this->prophesize(EcsUserProviderInterface::class);
-        $provider->getDomain()->willReturn('in_memory');
-        $provider->getUser()->willReturn($user->reveal());
-
-        $processor = new UserProcessor($provider->reveal(), 'unknown');
-
-        $record = new LogRecord(
-            new \DateTimeImmutable(),
-            'channel',
-            Level::Info,
-            'message',
-            []
-        );
-
-        $record = $processor($record);
+        $record = $processor($this->makeRecord());
 
         $this->assertArrayHasKey('user', $record->context);
         $this->assertInstanceOf(User::class, $record->context['user']);
@@ -42,119 +40,75 @@ class UserProcessorTest extends TestCase
 
     public function testWithoutUserProcessor(): void
     {
-        $provider = $this->prophesize(EcsUserProviderInterface::class);
-        $provider->getDomain()->willReturn('in_memory');
-        $provider->getUser()->willReturn(null);
+        $processor = new UserProcessor($this->makeProvider(null, 'in_memory'), 'unknown');
 
-        $processor = new UserProcessor($provider->reveal(), 'unknown');
-
-        $record = new LogRecord(
-            new \DateTimeImmutable(),
-            'channel',
-            Level::Info,
-            'message',
-            []
-        );
-
-        $record = $processor($record);
+        $record = $processor($this->makeRecord());
 
         $this->assertArrayNotHasKey('user', $record->context);
     }
 
     public function testSkipsWhenUserAlreadyInContext(): void
     {
-        $provider = $this->prophesize(EcsUserProviderInterface::class);
+        $processor = new UserProcessor($this->createStub(EcsUserProviderInterface::class), 'unknown');
 
-        $processor = new UserProcessor($provider->reveal(), 'unknown');
+        $record = $processor($this->makeRecord(['user' => ['id' => 'User Id']]));
 
-        $record = new LogRecord(
-            new \DateTimeImmutable(),
-            'channel',
-            Level::Info,
-            'message',
-            [
-                'user' => [
-                    'id' => 'User Id',
-                ],
-            ]
-        );
-
-        $record = $processor($record);
-
-        $this->assertArrayHasKey('user', $record->context);
-        $this->assertArrayHasKey('id', $record->context['user']);
         $this->assertSame('User Id', $record->context['user']['id']);
     }
 
     public function testDomainFromProviderTakesPriority(): void
     {
-        $user = new User();
+        $processor = new UserProcessor($this->makeProvider(new User(), 'provider_domain'), 'constructor_domain');
 
-        $provider = $this->prophesize(EcsUserProviderInterface::class);
-        $provider->getDomain()->willReturn('provider_domain');
-        $provider->getUser()->willReturn($user);
+        $record = $processor($this->makeRecord());
 
-        $processor = new UserProcessor($provider->reveal(), 'constructor_domain');
-
-        $record = new LogRecord(
-            new \DateTimeImmutable(),
-            'channel',
-            Level::Info,
-            'message',
-            []
-        );
-
-        $record = $processor($record);
-
-        $this->assertArrayHasKey('user', $record->context);
         $this->assertSame('provider_domain', $record->context['user']->jsonSerialize()['user']['domain']);
     }
 
     public function testDomainFallbackToConstructor(): void
     {
-        $user = new User();
+        $processor = new UserProcessor($this->makeProvider(new User(), null), 'constructor_domain');
 
-        $provider = $this->prophesize(EcsUserProviderInterface::class);
-        $provider->getDomain()->willReturn(null);
-        $provider->getUser()->willReturn($user);
+        $record = $processor($this->makeRecord());
 
-        $processor = new UserProcessor($provider->reveal(), 'constructor_domain');
-
-        $record = new LogRecord(
-            new \DateTimeImmutable(),
-            'channel',
-            Level::Info,
-            'message',
-            []
-        );
-
-        $record = $processor($record);
-
-        $this->assertArrayHasKey('user', $record->context);
         $this->assertSame('constructor_domain', $record->context['user']->jsonSerialize()['user']['domain']);
     }
 
     public function testNoDomainWhenBothAreNull(): void
     {
-        $user = new User();
+        $processor = new UserProcessor($this->makeProvider(new User(), null), null);
 
-        $provider = $this->prophesize(EcsUserProviderInterface::class);
-        $provider->getDomain()->willReturn(null);
-        $provider->getUser()->willReturn($user);
+        $record = $processor($this->makeRecord());
 
-        $processor = new UserProcessor($provider->reveal(), null);
-
-        $record = new LogRecord(
-            new \DateTimeImmutable(),
-            'channel',
-            Level::Info,
-            'message',
-            []
-        );
-
-        $record = $processor($record);
-
-        $this->assertArrayHasKey('user', $record->context);
         $this->assertArrayNotHasKey('domain', $record->context['user']->jsonSerialize()['user'] ?? []);
+    }
+
+    public function testResetClearsDomainCache(): void
+    {
+        $user = new User();
+        $domainCallCount = 0;
+
+        $provider = $this->createStub(EcsUserProviderInterface::class);
+        $provider->method('getUser')->willReturn($user);
+        $provider->method('getDomain')->willReturnCallback(static function () use (&$domainCallCount): ?string {
+            ++$domainCallCount;
+
+            return null;
+        });
+
+        $processor = new UserProcessor($provider);
+
+        $processor($this->makeRecord());
+        $this->assertSame(1, $domainCallCount); // getDomain resolved on first invocation
+
+        $processor($this->makeRecord());
+        /* @phpstan-ignore method.alreadyNarrowedType (cache hit, getDomain not re-called) */
+        $this->assertSame(1, $domainCallCount);
+
+        $processor->reset();
+
+        $processor($this->makeRecord());
+        /* @phpstan-ignore method.impossibleType (cache cleared, getDomain resolved again) */
+        $this->assertSame(2, $domainCallCount);
     }
 }

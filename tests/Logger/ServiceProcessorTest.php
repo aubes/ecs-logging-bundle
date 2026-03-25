@@ -9,12 +9,10 @@ use Elastic\Types\Service;
 use Monolog\Level;
 use Monolog\LogRecord;
 use PHPUnit\Framework\TestCase;
-use Prophecy\PhpUnit\ProphecyTrait;
 
 class ServiceProcessorTest extends TestCase
 {
-    use ProphecyTrait;
-
+    /** @param array<string, mixed> $context */
     private function createRecord(array $context): LogRecord
     {
         return new LogRecord(
