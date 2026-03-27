@@ -205,8 +205,16 @@ final class ProcessorLoader
      */
     private function configureMonologProcessor(array $config, array $configOverride, Definition $processor, int $priority = 0): void
     {
-        $channels = !empty($configOverride['channels']) ? $configOverride['channels'] : $config['monolog']['channels'];
-        $handlers = !empty($configOverride['handlers']) ? $configOverride['handlers'] : $config['monolog']['handlers'];
+        $processorHasChannels = !empty($configOverride['channels']);
+        $processorHasHandlers = !empty($configOverride['handlers']);
+
+        if ($processorHasChannels || $processorHasHandlers) {
+            $channels = $configOverride['channels'];
+            $handlers = $configOverride['handlers'];
+        } else {
+            $channels = $config['monolog']['channels'];
+            $handlers = $config['monolog']['handlers'];
+        }
 
         if (!empty($channels) && !empty($handlers)) {
             throw new InvalidConfigurationException('ecs_logging: a processor cannot target both channels and handlers simultaneously. Configure one or the other.');
