@@ -1,5 +1,7 @@
 # AutoLabelProcessor
 
+Keep your custom context fields without polluting the ECS namespace. Non-ECS keys are moved to `labels` or dropped automatically.
+
 Removes non-ECS context keys from log records to protect the ECS namespace. Optionally moves them into [`labels`](https://www.elastic.co/guide/en/ecs/current/ecs-base.html) instead of dropping them.
 
 ## Configuration

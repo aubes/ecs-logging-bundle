@@ -1,5 +1,7 @@
 # ServiceProcessor
 
+Configure once, every log record is automatically enriched with your service name, version and type.
+
 Injects static [ECS `service.*`](https://www.elastic.co/guide/en/ecs/current/ecs-service.html) metadata into every log record. Values are defined in config and injected at container build time.
 
 ## Configuration
@@ -52,4 +54,15 @@ With the processor enabled, every log record receives the service fields automat
 
 ```php
 $logger->info('message');
+```
+
+ECS output:
+
+```json
+{
+    "service": {
+        "name": "my-app",
+        "version": "1.0.0"
+    }
+}
 ```

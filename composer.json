@@ -2,7 +2,7 @@
     "name": "aubes/ecs-logging-bundle",
     "type": "symfony-bundle",
     "description": "Symfony bundle providing the Ecs log format",
-    "keywords": ["symfony", "bundle", "ecs", "elastic", "elastic-common-schema", "monolog", "logging"],
+    "keywords": ["symfony", "symfony-bundle", "ecs", "elastic", "elastic-common-schema", "monolog", "logging"],
     "license": "MIT",
     "authors": [
         {

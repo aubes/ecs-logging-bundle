@@ -1,5 +1,7 @@
 # HostProcessor
 
+Enrich every log record with host metadata (name, IP, architecture).
+
 Injects static [ECS `host.*`](https://www.elastic.co/guide/en/ecs/current/ecs-host.html) fields into every log record. Values are resolved once at container build time and cached for the lifetime of the process.
 
 ## Configuration
@@ -32,4 +34,15 @@ ecs_logging:
 | `host.name` | `gethostname()` |
 | `host.ip` | Not set unless `ip` is provided or `resolve_ip: true` |
 | `host.architecture` | `php_uname('m')` (e.g. `x86_64`, `aarch64`) |
+
+ECS output:
+
+```json
+{
+    "host": {
+        "name": "example.com",
+        "architecture": "x86_64"
+    }
+}
+```
 

@@ -75,6 +75,7 @@ final class EcsLoggingBundle extends AbstractBundle
                         ->append($config->addAutoLabelProcessorNode())
                         ->append($config->addHostProcessorNode())
                         ->append($config->addHttpRequestProcessorNode())
+                        ->append($config->addCorrelationIdProcessorNode())
                     ->end()
                 ->end()
             ->end()
@@ -100,6 +101,7 @@ final class EcsLoggingBundle extends AbstractBundle
         $loader->registerServiceProcessor($config, $builder);
         $loader->registerTracingProcessor($config, $builder);
         $loader->registerUserProcessor($config, $builder);
+        $loader->registerCorrelationIdProcessor($config, $builder);
     }
 
     public function build(ContainerBuilder $container): void

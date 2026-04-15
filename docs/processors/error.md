@@ -1,5 +1,7 @@
 # ErrorProcessor
 
+Just pass a `\Throwable` in context, the processor handles the rest. With `map_exception_key`, Symfony's own exceptions (HttpKernel, security, form...) are also converted to ECS automatically.
+
 Converts a `\Throwable` in the log context to [ECS `error.*`](https://www.elastic.co/guide/en/ecs/current/ecs-error.html) fields.
 
 ## Configuration
@@ -38,6 +40,19 @@ try {
     // ...
 } catch (\Throwable $e) {
     $logger->error('Something failed', ['error' => $e]);
+}
+```
+
+ECS output:
+
+```json
+{
+    "error": {
+        "type": "RuntimeException",
+        "message": "Something failed",
+        "code": 0,
+        "stack_trace": "RuntimeException: Something failed in /app/src/Service.php:42\n..."
+    }
 }
 ```
 

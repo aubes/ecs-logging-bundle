@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Aubes\EcsLoggingBundle\DependencyInjection;
 
 use Aubes\EcsLoggingBundle\Logger\AutoLabelProcessor;
+use Aubes\EcsLoggingBundle\Logger\CorrelationIdProcessor;
 use Aubes\EcsLoggingBundle\Logger\ErrorProcessor;
 use Aubes\EcsLoggingBundle\Logger\HostProcessor;
 use Aubes\EcsLoggingBundle\Logger\HttpRequestProcessor;
@@ -133,6 +134,7 @@ final class ProcessorLoader
 
         $processor = new Definition(TracingProcessor::class);
         $processor->setArgument('$fieldName', $processorConfig['field_name']);
+        $processor->setArgument('$mode', $processorConfig['mode']);
 
         $this->configureMonologProcessor($config, $processorConfig, $processor);
 
@@ -197,6 +199,24 @@ final class ProcessorLoader
         $provider->setAutowired(true);
 
         return $provider;
+    }
+
+    /** @param array<string, mixed> $config */
+    public function registerCorrelationIdProcessor(array $config, ContainerBuilder $builder): void
+    {
+        if (!isset($config['processor']['correlation_id']) || !$config['processor']['correlation_id']['enabled']) {
+            return;
+        }
+
+        $processorConfig = $config['processor']['correlation_id'];
+
+        $processor = new Definition(CorrelationIdProcessor::class);
+        $processor->setArgument('$fieldName', $processorConfig['field_name']);
+        $processor->setArgument('$target', $processorConfig['target']);
+
+        $this->configureMonologProcessor($config, $processorConfig, $processor);
+
+        $builder->setDefinition('.ecs_logging.processor.correlation_id', $processor);
     }
 
     /**
