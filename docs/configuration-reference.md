@@ -47,6 +47,11 @@ ecs_logging:
             channels:             []
         tracing:
             enabled:              false
+
+            # "default" reads a nested array from context[field_name]. "opentelemetry" reads flat trace_id/span_id keys injected by the OTel Monolog processor (field_name is ignored).
+            mode:                 default # One of "default"; "opentelemetry"
+
+            # Context key read by the processor in "default" mode. Ignored in "opentelemetry" mode.
             field_name:           tracing
 
             # Logging handler list the processor should be pushed to
@@ -101,6 +106,20 @@ ecs_logging:
 
             # host.architecture - auto-detected via php_uname('m') if null
             architecture:         null
+
+            # Logging handler list the processor should be pushed to
+            handlers:             []
+
+            # Logging channel list the processor should be pushed to
+            channels:             []
+        correlation_id:
+            enabled:              false
+
+            # Key to read from Monolog extra (must match the library that populates extra).
+            field_name:           correlation_id
+
+            # Where to write the correlation ID: "labels" writes to labels.correlation_id, "trace" writes to trace.id.
+            target:               labels # One of "labels"; "trace"
 
             # Logging handler list the processor should be pushed to
             handlers:             []

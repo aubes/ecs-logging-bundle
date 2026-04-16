@@ -1,5 +1,7 @@
 # HttpRequestProcessor
 
+Every log record automatically includes HTTP method, URL and protocol version from the current request.
+
 Injects [ECS `http.*`](https://www.elastic.co/guide/en/ecs/current/ecs-http.html), [`url.*`](https://www.elastic.co/guide/en/ecs/current/ecs-url.html), and optionally `client.ip` from the current HTTP request into every log record.
 
 > No active request (e.g. in a Symfony command) means the processor has no effect.
@@ -43,5 +45,23 @@ ecs_logging:
 | `url.port` | Port, if non-standard (80/443 are omitted) |
 
 > **Note - `url.path`**
-> The request path can contain personal identifiers embedded in the route (e.g. `/api/users/john@example.com/`, `/reset-password/TOKEN`).
-> Consider normalising routes before logging (log `/api/users/{id}` rather than `/api/users/42`).
+> The request path can contain personal identifiers embedded in the route.
+
+ECS output:
+
+```json
+{
+    "http": {
+        "request": {
+            "method": "POST",
+            "mime_type": "application/json"
+        },
+        "version": "1.1"
+    },
+    "url": {
+        "path": "/api/checkout",
+        "scheme": "https",
+        "domain": "example.com"
+    }
+}
+```

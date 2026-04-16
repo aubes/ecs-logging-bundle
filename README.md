@@ -15,8 +15,9 @@ Built on top of [elastic/ecs-logging](https://github.com/elastic/ecs-logging-php
 |---|---|
 | **`EcsFormatter`** | Produces ECS-compliant NDJSON (`log.level` lowercase, `ecs.version` and `tags` configurable) |
 | **`ServiceProcessor`** | Injects static `service.*` metadata (name, version, id…) into every record |
-| **`ErrorProcessor`** | Converts a `\Throwable` in context to ECS `error.*` fields |
-| **`TracingProcessor`** | Maps a tracing array to ECS `trace.id`, `transaction.id`, `span.id` |
+| **`ErrorProcessor`** | Converts a `\Throwable` in context to ECS `error.*` fields. `map_exception_key` also catches Symfony's native exceptions |
+| **`TracingProcessor`** | Maps tracing data to ECS `trace.id`, `transaction.id`, `span.id` (supports manual arrays and OpenTelemetry flat keys) |
+| **`CorrelationIdProcessor`** | Maps a correlation ID from Monolog `extra` to ECS `labels.correlation_id` or `trace.id` |
 | **`UserProcessor`** | Injects the authenticated user as ECS `user.*` via a customisable provider |
 | **`HttpRequestProcessor`** | Injects ECS `http.*`, `url.*`, and optionally `client.ip` from the current request |
 | **`HostProcessor`** | Injects static ECS `host.*` fields resolved once at boot time |
@@ -121,7 +122,8 @@ ecs_logging:
   - [ServiceProcessor](docs/processors/service.md)
   - [ErrorProcessor](docs/processors/error.md)
   - [TracingProcessor](docs/processors/tracing.md)
-  - [UserProcessor](docs/processors/user.md) — includes custom provider
+  - [CorrelationIdProcessor](docs/processors/correlation-id.md)
+  - [UserProcessor](docs/processors/user.md)
   - [AutoLabelProcessor](docs/processors/auto-label.md)
   - [HttpRequestProcessor](docs/processors/http-request.md)
   - [HostProcessor](docs/processors/host.md)

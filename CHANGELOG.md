@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.1.0]
+
+### Added
+
+- **`CorrelationIdProcessor`** — new processor that reads a correlation ID from Monolog `extra` and writes it to `labels.correlation_id` or `trace.id`. Works with any library that populates `extra` (e.g. `aubes/correlation-bundle`). The source key is removed from `extra` after processing.
+- **`TracingProcessor`** — new `opentelemetry` mode that reads flat `trace_id`/`span_id`/`trace_flags` keys injected by the OpenTelemetry Monolog processor and maps them to ECS fields. The flat keys are cleaned up from context automatically.
+
 ## [3.0.1]
 
 ### Fixed
@@ -89,7 +96,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Symfony 6.4, 7.x, and 8.x compatibility.
 - PHP 8.1+ support.
 
-[Unreleased]: https://github.com/aubes/ecs-logging-bundle/compare/v3.0.0...HEAD
+[Unreleased]: https://github.com/aubes/ecs-logging-bundle/compare/v3.1.0...HEAD
+[3.1.0]: https://github.com/aubes/ecs-logging-bundle/compare/v3.0.1...v3.1.0
+[3.0.1]: https://github.com/aubes/ecs-logging-bundle/compare/v3.0.0...v3.0.1
 [3.0.0]: https://github.com/aubes/ecs-logging-bundle/compare/v2.0.2...v3.0.0
 [2.0.2]: https://github.com/aubes/ecs-logging-bundle/compare/v2.0.1...v2.0.2
 [2.0.1]: https://github.com/aubes/ecs-logging-bundle/compare/v2.0.0...v2.0.1

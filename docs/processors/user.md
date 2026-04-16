@@ -1,5 +1,7 @@
 # UserProcessor
 
+Know who triggered every log record. The authenticated user is injected automatically.
+
 Injects the currently authenticated user as [ECS `user.*`](https://www.elastic.co/guide/en/ecs/current/ecs-user.html) fields via a user provider.
 
 ## Configuration
@@ -84,4 +86,14 @@ ecs_logging:
             # Symfony\Contracts\Service\ResetInterface so Symfony clears it between requests.
             # The built-in EcsUserProvider already implements it.
             provider: 'App\Security\CustomEcsUserProvider'
+```
+
+ECS output:
+
+```json
+{
+    "user": {
+        "name": "john.doe"
+    }
+}
 ```

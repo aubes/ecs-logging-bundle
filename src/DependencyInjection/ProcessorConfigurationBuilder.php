@@ -57,7 +57,12 @@ final class ProcessorConfigurationBuilder
         $node
             ->canBeEnabled()
             ->children()
-                ->scalarNode('field_name')->defaultValue('tracing')->info('Context key read by the processor (e.g. $logger->info("msg", ["tracing" => ["trace_id" => "…"]])).')->end()
+                ->enumNode('mode')
+                    ->values(['default', 'opentelemetry'])
+                    ->defaultValue('default')
+                    ->info('"default" reads a nested array from context[field_name]. "opentelemetry" reads flat trace_id/span_id keys injected by the OTel Monolog processor (field_name is ignored).')
+                ->end()
+                ->scalarNode('field_name')->defaultValue('tracing')->info('Context key read by the processor in "default" mode. Ignored in "opentelemetry" mode.')->end()
             ->end()
             ->append($this->addHandlersNode())
             ->append($this->addChannelsNode());
@@ -162,6 +167,29 @@ final class ProcessorConfigurationBuilder
                 ->booleanNode('include_referrer')
                     ->defaultFalse()
                     ->info('Log http.request.referrer. WARNING: the Referer header may contain external URLs with sensitive data (tokens, session identifiers).')
+                ->end()
+            ->end()
+            ->append($this->addHandlersNode())
+            ->append($this->addChannelsNode());
+
+        return $node;
+    }
+
+    public function addCorrelationIdProcessorNode(): ArrayNodeDefinition
+    {
+        $node = (new TreeBuilder('correlation_id'))->getRootNode();
+        $node
+            ->canBeEnabled()
+            ->info('Injects a correlation ID from Monolog extra into the log context (works with any library that populates extra).')
+            ->children()
+                ->scalarNode('field_name')
+                    ->defaultValue('correlation_id')
+                    ->info('Key to read from Monolog extra (e.g. "correlation_id"). Must match the field name configured in the library that populates extra.')
+                ->end()
+                ->enumNode('target')
+                    ->values(['labels', 'trace'])
+                    ->defaultValue('labels')
+                    ->info('Where to write the correlation ID: "labels" writes to labels.correlation_id, "trace" writes to trace.id. WARNING: ECS expects trace.id to be a 32-character hex string; ensure your correlation ID generator produces this format when using "trace".')
                 ->end()
             ->end()
             ->append($this->addHandlersNode())
