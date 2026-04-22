@@ -100,6 +100,7 @@ final class ProcessorLoader
         $processor->setArgument('$includeFullUrl', $processorConfig['include_full_url']);
         $processor->setArgument('$includeClientIp', $processorConfig['include_client_ip']);
         $processor->setArgument('$includeReferrer', $processorConfig['include_referrer']);
+        $processor->addTag('kernel.reset', ['method' => 'reset']);
 
         $this->configureMonologProcessor($config, $processorConfig, $processor);
 
@@ -153,6 +154,7 @@ final class ProcessorLoader
         $processor = new Definition(UserProcessor::class);
         $processor->setArgument('$provider', $this->resolveUserProvider($processorConfig));
         $processor->setArgument('$domain', $processorConfig['domain']);
+        $processor->addTag('kernel.reset', ['method' => 'reset']);
 
         $this->configureMonologProcessor($config, $processorConfig, $processor);
 
@@ -197,6 +199,7 @@ final class ProcessorLoader
 
         $provider = new Definition(EcsUserProvider::class);
         $provider->setAutowired(true);
+        $provider->addTag('kernel.reset', ['method' => 'reset']);
 
         return $provider;
     }
