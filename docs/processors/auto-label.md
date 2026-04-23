@@ -32,7 +32,7 @@ The `mode` option defines which context keys are **kept as-is** (the ECS whiteli
 | `full` | All ECS top-level field sets (8.x and 9.x) |
 | `custom` | Only the keys listed in `fields` |
 
-Bundle-internal keys (`tracing`, `span`) are always protected regardless of mode.
+Always-protected keys (`tracing`, `span`) are preserved regardless of mode.
 
 ```yaml
 auto_label:
