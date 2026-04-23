@@ -198,7 +198,7 @@ final class ProcessorLoader
         }
 
         $provider = new Definition(EcsUserProvider::class);
-        $provider->setAutowired(true);
+        $provider->setArgument('$tokenStorage', new Reference('security.token_storage'));
         $provider->addTag('kernel.reset', ['method' => 'reset']);
 
         return $provider;
