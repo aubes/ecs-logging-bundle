@@ -6,7 +6,7 @@ This example shows a Symfony application logging an error during a payment proce
 
 - **Symfony 6.4+** with Monolog
 - **`symfony/security-bundle`** installed (for `UserProcessor`)
-- **[`open-telemetry/opentelemetry-auto-symfony`](https://github.com/opentelemetry-php/contrib-auto-symfony)** installed with `OTEL_PHP_PSR3_MODE=inject`, which injects flat `trace_id`/`span_id` keys into Monolog context. The `TracingProcessor` in `opentelemetry` mode reads these keys and maps them to ECS fields.
+- **[`open-telemetry/opentelemetry-auto-psr3`](https://github.com/opentelemetry-php/contrib-auto-psr3)** installed with `OTEL_PHP_PSR3_MODE=inject`, which injects flat `trace_id`/`span_id` keys into Monolog context. Typically paired with **[`open-telemetry/opentelemetry-auto-symfony`](https://github.com/opentelemetry-php/contrib-auto-symfony)**, which creates the spans. The `TracingProcessor` in `opentelemetry` mode reads these keys and maps them to ECS fields.
 
 ## Configuration
 

@@ -64,7 +64,7 @@ ECS output:
 In `opentelemetry` mode, the processor reads flat `trace_id`, `span_id`, and `trace_flags` keys from the log context (injected by the OpenTelemetry Monolog handler) and maps them to ECS fields. The `field_name` option is ignored.
 
 This mode is designed to work with:
-- [`open-telemetry/opentelemetry-auto-symfony`](https://github.com/opentelemetry-php/contrib-auto-symfony) with `OTEL_PHP_PSR3_MODE=inject`
+- [`open-telemetry/opentelemetry-auto-psr3`](https://github.com/opentelemetry-php/contrib-auto-psr3) with `OTEL_PHP_PSR3_MODE=inject` (typically paired with [`open-telemetry/opentelemetry-auto-symfony`](https://github.com/opentelemetry-php/contrib-auto-symfony), which creates the spans)
 - Any OpenTelemetry setup that injects flat tracing keys into Monolog context
 
 ### Configuration
