@@ -118,6 +118,8 @@ ecs_logging:
 ## Documentation
 
 - [Configuration reference](docs/configuration-reference.md)
+- [Logging a Symfony app in ECS format](docs/symfony-logs.md)
+- [Advanced example](docs/advanced-example.md)
 - Processors
   - [ServiceProcessor](docs/processors/service.md)
   - [ErrorProcessor](docs/processors/error.md)
